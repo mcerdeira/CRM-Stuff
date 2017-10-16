@@ -1,0 +1,37 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <style type="text/css">
+        #TxtCode
+        {
+            height: 80px;
+            width: 876px;
+        }
+        .style1
+        {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: small;
+        }
+    </style>
+	<script src="ClientGlobalContext.js.aspx"></script>
+    <script language="javascript" type="text/javascript">
+// <![CDATA[
+
+        function btnClick() {	
+            //var context = "Xrm = window.parent.Xrm;";			
+            eval("with (window.parent) {" + TxtCode.value + "}");
+        }
+
+// ]]>
+    </script>
+</head>
+<body>
+
+    <p>
+        <textarea id="TxtCode" name="S1"></textarea></p>
+    <p>
+        <input id="BtnEncode" type="button" value="Run" onclick="btnClick()" />&nbsp;       
+</body>
+</html>

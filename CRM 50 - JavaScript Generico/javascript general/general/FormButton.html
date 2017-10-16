@@ -1,0 +1,175 @@
+<HTML xmlns="http://www.w3.org/1999/xhtml"><HEAD><TITLE></TITLE>
+<STYLE type=text/css>
+	#body
+	{
+		height:0px;
+		width:0px;
+		padding:0px 0px  0px 0px;
+		margin:0px 0px  0px 0px;
+		background-color:rgb(246, 248, 250);
+	}
+	#myCrmButton
+	{
+		border:1px none #F1C43F;
+		background-color:rgb(246, 248, 250);
+		width:auto;
+		height:100%;
+		font-size:11px
+		line-height:50px;
+		background-image:url('../_imgs/ico_16_1071.gif');
+		background-repeat:no-repeat;
+		background-position:2px center;
+		margin:0px 0px  0px 0px;
+		font-family:"Segoe UI", Tahoma, Verdana, sans-serif;
+		font-size:8pt;
+		text-align:left;
+		text-indent:17px;
+		font-weight:normal;
+		line-height:1.25em;
+		outline: none;
+		padding: 2px 5px 2px 5px;
+		overflow:hidden;
+		outline-color:Background;
+		position: absolute;           
+	 }   
+</STYLE>
+
+<SCRIPT src="../../ClientGlobalContext.js.aspx"></SCRIPT>
+
+<SCRIPT type=text/jscript>
+var Settings = {};
+var crmButton = {};
+	
+crmButton.get = function() {
+	return document.getElementById("myCrmButton");
+}
+crmButton.onOver = function() {
+	var myCrmButton = crmButton.get();
+	myCrmButton.style.backgroundColor= "RGB(253,238,179)"; //= "#FFD86C";
+	myCrmButton.style.borderStyle = "solid";
+	myCrmButton.style.borderColor = "RGB(241,196,63)"; //"#C2821B";
+	myCrmButton.style.outline = "none";
+	myCrmButton.style.outlineWidth = "0px";
+}
+
+crmButton.onOut = function() {
+	var myCrmButton = crmButton.get();
+	myCrmButton.style.backgroundColor = "";
+	myCrmButton.style.borderStyle = "none";
+	myCrmButton.style.outline = "none";
+	myCrmButton.style.outlineWidth = "0px";
+}
+crmButton.onActive = function() {
+	var myCrmButton = crmButton.get();
+	myCrmButton.style.backgroundColor = "#FDEEB3";
+	myCrmButton.style.borderStyle = "none";
+	myCrmButton.style.borderColor = "#F1C43F";
+	myCrmButton.style.outline = "none";
+	myCrmButton.style.outlineWidth = "0px";
+}
+onLoad = function() {
+	var myCrmButton = crmButton.get();
+	myCrmButton.style.outline = "none";
+	myCrmButton.style.outlineWidth = "0px";
+	var bttnParameters = getDataParam();
+	//.Text  .Function .Image .Tip 
+
+	//myCrmButton.setAttribute('onclick', bttnParameters.Function);
+	var myFn = function () { eval(bttnParameters.Function), myCrmButton.style.outline = "none";};
+	myCrmButton.setAttribute('onclick', myFn);
+
+	myCrmButton.value = bttnParameters.Text;
+	myCrmButton.style.backgroundImage = "url('" + "../../" + bttnParameters.Image + "')";
+
+}
+crmButton.Disable = function() {
+	var myCrmButton= crmButton.get()
+	crmButton.onOut();
+	myCrmButton.disabled = true;
+	myCrmButton.style.opacity= "0.6"; 
+	myCrmButton.style.filter= "gray(), alpha(opacity=60)";
+	myCrmButton.style.zoom= "1"; 
+}
+crmButton.Enable = function() {
+	crmButton.get().disabled = false;
+	myCrmButton.style.opacity= "1"; 
+	myCrmButton.style.filter= "";
+	myCrmButton.style.zoom= "1";
+}
+
+function testFunction() {
+	alert("");
+}
+</SCRIPT>
+
+<SCRIPT language=jscript type=text/jscript>
+    function getDataParam()
+    {   //Get the any query string parameters and load them
+        //into the vals array
+        var bttnParameters = null;
+        var vals = new Array();
+        if (location.search != "")
+        {
+            vals = location.search.substr(1).split("&");
+            for (var i in vals)
+            {
+                vals[i] = vals[i].replace(/\+/g, " ").split("=");
+            }
+            //look for the parameter named 'data'
+            var found = false;
+            for (var i in vals)
+            {
+                if (vals[i][0].toLowerCase() == "data")
+                {
+                    bttnParameters = parseDataValue(vals[i][1]);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            { noParams(); }
+        }
+        else
+        {
+            noParams();
+        }
+            
+        return bttnParameters;
+    }
+
+    function parseDataValue(datavalue)
+    {   
+        var bttnParameters = null;
+            
+        if (datavalue != "")
+        {
+            var vals = new Array();
+            vals = decodeURIComponent(datavalue).split("&");
+                
+            for (var i in vals)
+            {
+                vals[i] = vals[i].replace(/\+/g, " ");
+            }
+
+                bttnParameters = {
+                Text: (vals[0]) ? vals[0] : "",
+                Function: (vals[1]) ? vals[1] : "",
+                Image: (vals[2]) ? vals[2] : "",
+                Tip: (vals[3]) ? vals[4] : ""
+            }
+        }
+        else
+        {
+            noParams();
+        }
+        return bttnParameters;
+    }
+
+    function noParams()
+    {
+        alert("No data parameter was passed to this web resource");
+    }
+</SCRIPT>
+
+<META charset=utf-8></HEAD>
+<BODY id=body onload=onLoad()><INPUT style="BORDER-BOTTOM-STYLE: none; BORDER-BOTTOM-COLOR: rgb(241,196,63); BORDER-TOP-COLOR: rgb(241,196,63); OUTLINE-STYLE: none; OUTLINE-COLOR: invert; BORDER-LEFT-STYLE: none; OUTLINE-WIDTH: 0px; BORDER-TOP-STYLE: none; BORDER-RIGHT-COLOR: rgb(241,196,63); BORDER-RIGHT-STYLE: none; BORDER-LEFT-COLOR: rgb(241,196,63)" onkeydown=crmButton.onActive() id=myCrmButton onmouseup=crmButton.onOver() onfocus=crmButton.onOut() onmouseover=crmButton.onOver() onkeyup=crmButton.onOut() onmouseout=crmButton.onOut() onmousedown=crmButton.onActive() onclick=testFunction() value="My Button" type=button></BODY></HTML>

@@ -1,0 +1,487 @@
+<DependentOptionSetConfig>
+  <ParentField id="axx_area">
+    <DependentField id="axx_categoria" />
+    <Option value="282270000">
+      <ShowOption value="282270001" />
+      <ShowOption value="282270004" />
+      <ShowOption value="282270012" />
+      <ShowOption value="282270023" />
+      <ShowOption value="282270000" />
+      <ShowOption value="282270002" />
+      <ShowOption value="282270005" />
+      <ShowOption value="282270006" />
+      <ShowOption value="282270008" />
+      <ShowOption value="282270010" />
+      <ShowOption value="282270020" />
+      <ShowOption value="282270022" />
+      <ShowOption value="282270026" />
+      <ShowOption value="282270027" />
+      <ShowOption value="282270037" />
+    </Option>
+  </ParentField>
+  <ParentField id="axx_categoria">
+    <DependentField id="axx_subcategoria" />
+    <Option value="282270000" />
+    <Option value="282270001">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270008" />
+      <ShowOption value="282270009" />
+      <ShowOption value="282270010" />
+      <ShowOption value="282270013" />
+      <ShowOption value="282270040" />
+      <ShowOption value="282270036" />
+      <ShowOption value="282270044" />
+    </Option>
+    <Option value="282270002" />
+    <Option value="282270003" />
+    <Option value="282270004">
+      <ShowOption value="282270012" />
+      <ShowOption value="282270031" />
+    </Option>
+    <Option value="282270005" />
+    <Option value="282270006" />
+    <Option value="282270007" />
+    <Option value="282270008" />
+    <Option value="282270009" />
+    <Option value="282270010" />
+    <Option value="282270011" />
+    <Option value="282270012">
+      <ShowOption value="282270002" />
+      <ShowOption value="282270003" />
+      <ShowOption value="282270006" />
+    </Option>
+    <Option value="282270013" />
+    <Option value="282270014" />
+    <Option value="282270015" />
+    <Option value="282270016" />
+    <Option value="282270017" />
+    <Option value="282270018" />
+    <Option value="282270019" />
+    <Option value="282270020" />
+    <Option value="282270021" />
+    <Option value="282270022" />
+    <Option value="282270023">
+      <ShowOption value="282270011" />
+      <ShowOption value="282270046" />
+      <ShowOption value="282270016" />
+      <ShowOption value="282270047" />
+      <ShowOption value="282270048" />
+    </Option>
+    <Option value="282270024" />
+    <Option value="282270025" />
+    <Option value="282270026" />
+    <Option value="282270027" />
+    <Option value="282270028" />
+    <Option value="282270029" />
+    <Option value="282270030" />
+    <Option value="282270031" />
+    <Option value="282270032" />
+    <Option value="282270033" />
+    <Option value="282270034" />
+    <Option value="282270035" />
+    <Option value="282270036" />
+    <Option value="282270037">
+      <ShowOption value="282270049" />
+      <ShowOption value="282270050" />
+      <ShowOption value="282270051" />
+      <ShowOption value="282270052" />
+      <ShowOption value="282270053" />
+      <ShowOption value="282270054" />
+      <ShowOption value="282270055" />
+      <ShowOption value="282270056" />
+    </Option>
+  </ParentField>
+  <ParentField id="axx_subcategoria">
+    <DependentField id="axx_motivo" />
+    <Option value="282270000">
+      <ShowOption value="282270050" />
+    </Option>
+    <Option value="282270001" />
+    <Option value="282270002">
+      <ShowOption value="282270014" />
+      <ShowOption value="282270023" />
+    </Option>
+    <Option value="282270003">
+      <ShowOption value="282270052" />
+    </Option>
+    <Option value="282270004" />
+    <Option value="282270005" />
+    <Option value="282270006">
+      <ShowOption value="282270053" />
+    </Option>
+    <Option value="282270007" />
+    <Option value="282270008">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+      <ShowOption value="282270017" />
+    </Option>
+    <Option value="282270009">
+      <ShowOption value="282270002" />
+      <ShowOption value="282270007" />
+      <ShowOption value="282270008" />
+      <ShowOption value="282270026" />
+      <ShowOption value="282270048" />
+      <ShowOption value="282270033" />
+      <ShowOption value="282270051" />
+    </Option>
+    <Option value="282270010">
+      <ShowOption value="282270039" />
+      <ShowOption value="282270040" />
+      <ShowOption value="282270054" />
+    </Option>
+    <Option value="282270011">
+      <ShowOption value="282270001" />
+      <ShowOption value="282270009" />
+      <ShowOption value="282270010" />
+      <ShowOption value="282270044" />
+      <ShowOption value="282270011" />
+      <ShowOption value="282270012" />
+      <ShowOption value="282270013" />
+      <ShowOption value="282270018" />
+      <ShowOption value="282270019" />
+      <ShowOption value="282270024" />
+      <ShowOption value="282270031" />
+      <ShowOption value="282270032" />
+      <ShowOption value="282270051" />
+      <ShowOption value="282270035" />
+    </Option>
+    <Option value="282270012">
+      <ShowOption value="282270025" />
+      <ShowOption value="282270036" />
+    </Option>
+    <Option value="282270046">
+      <ShowOption value="282270005" />
+      <ShowOption value="282270041" />
+      <ShowOption value="282270006" />
+      <ShowOption value="282270042" />
+      <ShowOption value="282270043" />
+      <ShowOption value="282270045" />
+      <ShowOption value="282270016" />
+      <ShowOption value="282270019" />
+      <ShowOption value="282270029" />
+      <ShowOption value="282270030" />
+      <ShowOption value="282270034" />
+    </Option>
+    <Option value="282270013">
+      <ShowOption value="282270055" />
+    </Option>
+    <Option value="282270014" />
+    <Option value="282270015" />
+    <Option value="282270016">
+      <ShowOption value="282270056" />
+    </Option>
+    <Option value="282270017" />
+    <Option value="282270018" />
+    <Option value="282270019" />
+    <Option value="282270020" />
+    <Option value="282270021" />
+    <Option value="282270022" />
+    <Option value="282270023" />
+    <Option value="282270024" />
+    <Option value="282270025" />
+    <Option value="282270026" />
+    <Option value="282270027" />
+    <Option value="282270028" />
+    <Option value="282270029" />
+    <Option value="282270030" />
+    <Option value="282270031">
+      <ShowOption value="282270020" />
+      <ShowOption value="282270046" />
+      <ShowOption value="282270047" />
+      <ShowOption value="282270021" />
+      <ShowOption value="282270022" />
+      <ShowOption value="282270028" />
+      <ShowOption value="282270049" />
+    </Option>
+    <Option value="282270047">
+      <ShowOption value="282270003" />
+      <ShowOption value="282270015" />
+      <ShowOption value="282270060" />
+      <ShowOption value="282270061" />
+      <ShowOption value="282270027" />
+    </Option>
+    <Option value="282270032" />
+    <Option value="282270033" />
+    <Option value="282270034" />
+    <Option value="282270035" />
+    <Option value="282270036">
+      <ShowOption value="282270058" />
+    </Option>
+    <Option value="282270037" />
+    <Option value="282270038" />
+    <Option value="282270039" />
+    <Option value="282270040">
+      <ShowOption value="282270057" />
+    </Option>
+    <Option value="282270041" />
+    <Option value="282270042" />
+    <Option value="282270043" />
+    <Option value="282270044">
+      <ShowOption value="282270059" />
+    </Option>
+    <Option value="282270048">
+      <ShowOption value="282270037" />
+      <ShowOption value="282270038" />
+    </Option>
+    <Option value="282270045" />
+    <Option value="282270049" />
+    <Option value="282270050" />
+    <Option value="282270051" />
+    <Option value="282270052" />
+    <Option value="282270053" />
+    <Option value="282270054" />
+    <Option value="282270055" />
+    <Option value="282270056" />
+  </ParentField>
+  <ParentField id="axx_motivo">
+    <DependentField id="axx_operacion" />
+    <Option value="282270037">
+      <ShowOption value="282270003" />
+    </Option>
+    <Option value="282270000">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+      <ShowOption value="282270005" />
+      <ShowOption value="282270006" />
+      <ShowOption value="282270007" />
+    </Option>
+    <Option value="282270038">
+      <ShowOption value="282270003" />
+    </Option>
+    <Option value="282270039">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+    </Option>
+    <Option value="282270040">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+    </Option>
+    <Option value="282270001">
+      <ShowOption value="282270010" />
+    </Option>
+    <Option value="282270002">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+      <ShowOption value="282270005" />
+      <ShowOption value="282270006" />
+      <ShowOption value="282270007" />
+    </Option>
+    <Option value="282270003">
+      <ShowOption value="282270020" />
+    </Option>
+    <Option value="282270004">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+      <ShowOption value="282270005" />
+      <ShowOption value="282270006" />
+      <ShowOption value="282270007" />
+    </Option>
+    <Option value="282270005">
+      <ShowOption value="282270022" />
+    </Option>
+    <Option value="282270041">
+      <ShowOption value="282270014" />
+    </Option>
+    <Option value="282270006">
+      <ShowOption value="282270002" />
+      <ShowOption value="282270015" />
+    </Option>
+    <Option value="282270007">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+      <ShowOption value="282270005" />
+      <ShowOption value="282270006" />
+      <ShowOption value="282270007" />
+    </Option>
+    <Option value="282270008">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+      <ShowOption value="282270005" />
+      <ShowOption value="282270006" />
+      <ShowOption value="282270007" />
+    </Option>
+    <Option value="282270009">
+      <ShowOption value="282270003" />
+    </Option>
+    <Option value="282270042">
+      <ShowOption value="282270021" />
+    </Option>
+    <Option value="282270010">
+      <ShowOption value="282270018" />
+    </Option>
+    <Option value="282270043">
+      <ShowOption value="282270014" />
+    </Option>
+    <Option value="282270044">
+      <ShowOption value="282270003" />
+    </Option>
+    <Option value="282270045">
+      <ShowOption value="282270014" />
+    </Option>
+    <Option value="282270011">
+      <ShowOption value="282270008" />
+    </Option>
+    <Option value="282270012">
+      <ShowOption value="282270010" />
+    </Option>
+    <Option value="282270013">
+      <ShowOption value="282270008" />
+    </Option>
+    <Option value="282270014">
+      <ShowOption value="282270011" />
+    </Option>
+    <Option value="282270015">
+      <ShowOption value="282270020" />
+    </Option>
+    <Option value="282270016">
+      <ShowOption value="282270001" />
+      <ShowOption value="282270013" />
+    </Option>
+    <Option value="282270017">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+      <ShowOption value="282270005" />
+      <ShowOption value="282270006" />
+      <ShowOption value="282270007" />
+    </Option>
+    <Option value="282270018">
+      <ShowOption value="282270003" />
+    </Option>
+    <Option value="282270019">
+      <ShowOption value="282270014" />
+      <ShowOption value="282270024" />
+    </Option>
+    <Option value="282270020">
+      <ShowOption value="282270016" />
+    </Option>
+    <Option value="282270060">
+      <ShowOption value="282270020" />
+    </Option>
+    <Option value="282270046">
+      <ShowOption value="282270016" />
+    </Option>
+    <Option value="282270047">
+      <ShowOption value="282270016" />
+    </Option>
+    <Option value="282270061">
+      <ShowOption value="282270016" />
+    </Option>
+    <Option value="282270050">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+      <ShowOption value="282270005" />
+      <ShowOption value="282270006" />
+      <ShowOption value="282270007" />
+    </Option>
+    <Option value="282270052">
+      <ShowOption value="282270011" />
+    </Option>
+    <Option value="282270053">
+      <ShowOption value="282270011" />
+    </Option>
+    <Option value="282270054">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+      <ShowOption value="282270005" />
+      <ShowOption value="282270006" />
+      <ShowOption value="282270007" />
+    </Option>
+    <Option value="282270055">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+      <ShowOption value="282270005" />
+      <ShowOption value="282270006" />
+      <ShowOption value="282270007" />
+    </Option>
+    <Option value="282270056" />
+    <Option value="282270057">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+      <ShowOption value="282270005" />
+      <ShowOption value="282270006" />
+      <ShowOption value="282270007" />
+    </Option>
+    <Option value="282270058">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+      <ShowOption value="282270005" />
+      <ShowOption value="282270006" />
+      <ShowOption value="282270007" />
+    </Option>
+    <Option value="282270059">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+      <ShowOption value="282270005" />
+      <ShowOption value="282270006" />
+      <ShowOption value="282270007" />
+    </Option>
+    <Option value="282270021">
+      <ShowOption value="282270017" />
+    </Option>
+    <Option value="282270022">
+      <ShowOption value="282270016" />
+    </Option>
+    <Option value="282270023">
+      <ShowOption value="282270011" />
+    </Option>
+    <Option value="282270024">
+      <ShowOption value="282270008" />
+    </Option>
+    <Option value="282270025">
+      <ShowOption value="282270016" />
+    </Option>
+    <Option value="282270026">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+      <ShowOption value="282270005" />
+      <ShowOption value="282270006" />
+      <ShowOption value="282270007" />
+    </Option>
+    <Option value="282270048">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+    </Option>
+    <Option value="282270027">
+      <ShowOption value="282270019" />
+    </Option>
+    <Option value="282270028">
+      <ShowOption value="282270016" />
+    </Option>
+    <Option value="282270029">
+      <ShowOption value="282270023" />
+    </Option>
+    <Option value="282270030">
+      <ShowOption value="282270009" />
+    </Option>
+    <Option value="282270031">
+      <ShowOption value="282270009" />
+    </Option>
+    <Option value="282270032">
+      <ShowOption value="282270008" />
+    </Option>
+    <Option value="282270033">
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+      <ShowOption value="282270005" />
+      <ShowOption value="282270006" />
+      <ShowOption value="282270007" />
+    </Option>
+    <Option value="282270034">
+      <ShowOption value="282270014" />
+    </Option>
+    <Option value="282270049">
+      <ShowOption value="282270016" />
+    </Option>
+    <Option value="282270035">
+      <ShowOption value="282270008" />
+    </Option>
+    <Option value="282270051">
+      <ShowOption value="282270003" />
+      <ShowOption value="282270000" />
+      <ShowOption value="282270004" />
+    </Option>
+    <Option value="282270036">
+      <ShowOption value="282270016" />
+    </Option>
+  </ParentField>
+</DependentOptionSetConfig>

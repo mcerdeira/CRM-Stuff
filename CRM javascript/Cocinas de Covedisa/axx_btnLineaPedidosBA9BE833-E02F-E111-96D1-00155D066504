@@ -1,0 +1,233 @@
+function cargarProductoOnClick(){
+
+	//Configura la grilla a mostrar
+	cargarPreviewProducto(false);	
+}
+
+function cargarPreviewProducto(boolDelay){ 
+  var webResource = "WebResource_ProductPreview";
+  var formato = "ZD";
+  var attributeName = "";
+  var camposPedido =  "sec_General#name" + "|" +
+                        "Nombre del Producto#name" + "|" +
+						"Nombre del Producto#name" + "|" +
+						"Catidad Disponible#quantityonhand" + "|" +
+						"URL#producturl" + "|" +
+						"Marca#axx_marca" + "|" +
+						"Proveedor#axx_proveedor" + "|" +
+						"Argumento de Venta#axx_argumentoventa" + "|" +
+						"Argumento de Venta#axx_argumentoventa" + "|" +
+						"sec_Caracteristicas y Funciones#name" + "|" +
+						"Caracteriscas Generales#axx_caracteristicasgenerales" + "|" +
+						"Caracteriscas Generales#axx_caracteristicasgenerales" + "|" +
+						"Largo#axx_largo" + "|" +
+						"Ancho#axx_ancho" + "|" +
+						"Peso#axx_peso" + "|" +
+						"Espesor#axx_espesor" + "|" +
+						"Peso Volumetrico#axx_pesovolumetrico" + "|" +
+						"Peso Volumetrico#axx_pesovolumetrico" + "|" +
+						"sec_Garantia#name" + "|" +
+						"Garantia#axx_garantia" + "|" +
+						"Garante#axx_garante" + "|" +
+						"sec_Descripcion#name" + "|" +
+						"Peso Stock#stockweight" + "|" +
+						"Volumen Stock#stockvolume" + "|" +
+						"Descripcion Corta#axx_descripcioncorta" + "|" +
+						"Descripcion Corta#axx_descripcioncorta" + "|" +
+						"Descripcion Completa#description" + "|" +
+						"Descripcion Completa#description";						
+           
+    attributeName = "productid";
+
+    miFuncion = function(){
+      LoadLookPreview(webResource,attributeName,camposPedido,formato);
+      //Deshabilitar el boton de información del producto
+      getButton("WebResource_InfoSustitutos").Disable();
+      //Habilitar el boton de registros relacionados
+      getButton("WebResource_InfoKitProductos").Enable();
+      };
+    
+    //Mostrar la seccion de informarción del Productos:
+    //Xrm.Page.ui.controls.get("WebResource_ProductPreview").setVisible(true);
+    Xrm.Page.ui.tabs.get("LineaProducto").sections.get("tab_InfoProducto").setVisible(true);
+
+    //Ocultar la seccion de registros relacionados
+    Xrm.Page.ui.tabs.get("LineaProducto").sections.get("tab_Relacionados").setVisible(false);
+
+    if(boolDelay){
+      setTimeout(miFuncion, 1500);
+    }else{
+      miFuncion();
+    }
+}
+
+function cargarRelacionadosOnClick(){
+	cargarRegistrosRelacionados();
+	
+	//Ocultar la seccion de informarción del Producto:
+	//Xrm.Page.ui.controls.get("WebResource_ProductPreview").setVisible(false);
+	Xrm.Page.ui.tabs.get("LineaProducto").sections.get("tab_InfoProducto").setVisible(false);
+	
+	//Hago visible la Grilla de los Datos Relacionados
+	Xrm.Page.ui.tabs.get("LineaProducto").sections.get("tab_Relacionados").setVisible(true);
+}
+
+function displayRelatedSection(){
+	var SustitutosReady = getIFrame("IFRAME_Sustitutos").frameElement.contentWindow.document.getElementById("crmFormProxyForRibbon")
+	//var suscriptionReady = getIFrame("IFRAME_Suscription").frameElement.contentWindow.document.getElementById("crmFormProxyForRibbon")
+	//var orderReady = getIFrame("IFRAME_order").frameElement.contentWindow.document.getElementById("crmFormProxyForRibbon")
+	//var incidentReady = getIFrame("IFRAME_Incident").frameElement.contentWindow.document.getElementById("crmFormProxyForRibbon")
+	
+	if(SustitutosReady){ //&& suscriptionReady && orderReady && incidentReady){
+    		//Habilitar el boton de información del Producto
+		getButton("WebResource_InfoSustitutos").Enable();
+		//Deshabilitar el boton de registros relacionados
+		getButton("WebResource_InfoKitProductos").Disable();	
+		RefreshRibbon();
+		
+		var miFuncion = function(){
+    	//Habilitar el boton de información del Producto
+			getButton("WebResource_InfoSustitutos").Enable();
+			//Deshabilitar el boton de registros relacionados
+			getButton("WebResource_InfoKitProductos").Disable();	
+			Xrm.Page.ui.tabs.get("LineaProducto").sections.get("tab_Relacionados").setVisible(true);
+		}
+		setTimeout(miFuncion, 1500);
+	}
+}
+
+function cargarRegistrosRelacionados(){
+  var attributeName = "";
+                        
+  attributeName = "productid";
+
+  var attributo = Xrm.Page.getAttribute(attributeName);
+  if(typeof (producto_valorAnterior) != "undefined" && producto_valorAnterior == attributo.getValue()[0]){
+	//Mostrar la seccion de registros relacionados
+	Xrm.Page.ui.tabs.get("LineaProducto").sections.get("tab_Relacionados").setVisible(true);
+	//Habilitar el boton de información del Productos
+	getButton("WebResource_InfoSustitutos").Enable();
+	//Deshabilitar el boton de Registros Relacionados
+	getButton("WebResource_InfoKitProductos").Disable();	
+    return
+  }else{
+	  producto_valorAnterior = attributo.getValue()[0];  
+  }
+
+  if(attributo.getValue() && attributo.getValue()[0]){
+    var tipo = attributo.getValue()[0].entityType;
+
+    SetIframeContent("IFRAME_Sustitutos","1024",attributo.getValue()[0].id,"areaSubs","Sustitutos", "");
+    SetIframeContent("IFRAME_Kits","1024",attributo.getValue()[0].id,"areaKits","Kits", "");
+    SetIframeContent("IFRAME_Complementos","1024",attributo.getValue()[0].id,"areaaxx_product_product","Complementos", "");
+    //SetIframeContent("IFRAME_Incident","2",attributo.getValue()[0].id,"areaService","Casos", "");
+	
+    //Habilitar el boton de información del Productos
+    getButton("WebResource_InfoSustitutos").Enable();
+    //Deshabilitar el boton de Registros Relacionados
+    getButton("WebResource_InfoKitProductos").Disable();	
+    
+  }
+}
+
+function RefreshRibbon(){ 
+    //Xrm.Page.ui.navigation.items.get()[0].setFocus(); 
+    //Xrm.Page.ui.tabs.get()[0].setFocus(); 
+	loadArea('areaProcessSessions');
+	loadArea('areaForm');crmForm.GetTab($get('tab0', crmForm), true); 
+}
+
+function SetIframeContent(iframeObjId, objectType, primaryObjectId, areaName, iframeTitle, formId){    
+    //Get iframe control 
+    var iframeObject = Xrm.Page.getControl(iframeObjId);
+    if (iframeObject != null) 
+    {
+        //assemble URL
+        var strURL = "areas.aspx?formid=" + formId + "&navItemName=" + iframeTitle + "&oId=" + primaryObjectId + "&oType=" + objectType + "&pagemode=iframe&security=852023&tabSet=" + areaName;
+        //Set iframe URL
+        iframeObject.setSrc(strURL);
+    }
+}
+
+function getButton(webResource){
+	return getIFrame(webResource).crmButton;
+}
+
+function getIFrame(webResource){
+	var control = Xrm.Page.ui.controls.get(webResource);  
+	var id      = control.getObject().id;
+	var frame   = document.frames[id];
+	return frame;
+}
+
+function InformacionProducto(Repositorio){
+	//Busca los datos del producto
+	  var errorMssg = "alerta!";
+	  
+	  var IdProducto = Xrm.Page.getAttribute("productid");
+	  IdProducto = (IdProducto.getValue()) ? IdProducto.getValue()[0].id : null;
+	  
+	  if (!IdProducto){return}
+	  
+	  var organizationName = Xrm.Page.context.getOrgUniqueName();
+	  var serverURL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/" + organizationName ;
+	  
+	  var odataSelect = serverURL + "/xrmservices/2011/OrganizationData.svc/ProductSet?" +
+	  "$select=axx_Imagen1,axx_Imagen2,axx_Imagen3,Name,ProductId,ProductNumber&" + 
+	  "$filter=ProductId eq guid'" + IdProducto + "'";
+	  
+	  
+	  $.ajax({
+	type: "GET",
+	contentType: "application/json; charset=utf-8",
+	datatype: "json",
+	url: odataSelect,
+	beforeSend: function (XMLHttpRequest) { XMLHttpRequest.setRequestHeader("Accept", "application/json"); },
+	success: function (data, textStatus, XmlHttpRequest)
+		{
+		  if(data.d.results.length == 0){
+			alert(errorMssg); 
+			return
+		  }
+		  
+		  //Tomo los datos de respuesta
+		  var productoResp = data.d.results[0];
+		  
+		  		//Armo las URL de las imagenes
+		  var URLRepositorio = "http://catalogo.covedisa.com.ar" + "/" + productoResp.ProductNumber + "/"; //Repositorio;
+		  
+		  //Imagen 1
+		  if (productoResp.axx_Imagen1 != null){
+				var URL1 = URLRepositorio + productoResp.axx_Imagen1;
+		  }else{
+				var URL1 = URLRepositorio + "Imagen1.jpg";
+		  }
+		  
+		  //Imagen 2
+		  if (productoResp.axx_Imagen2 != null){
+				var URL2 = URLRepositorio + productoResp.axx_Imagen2;
+		  }else{
+				var URL2 = URLRepositorio + "Imagen2.jpg";
+		  }
+		  
+		  //Imagen 3
+		  if (productoResp.axx_Imagen3 != null){
+				var URL3 = URLRepositorio + productoResp.axx_Imagen3;
+		  }else{
+				var URL3 = URLRepositorio + "Imagen3.jpg";
+		  }
+		  
+		  //Devuelvo las URL armadas
+		  var URLImagenes = new Array(2);
+		  getIFrame("WebResource_GaleriaImagenes").misImagenes[0] = URL1;
+		  getIFrame("WebResource_GaleriaImagenes").misImagenes[1] = URL2;
+		  getIFrame("WebResource_GaleriaImagenes").misImagenes[2] = URL3;
+		  getIFrame("WebResource_GaleriaImagenes").cargarImagen();
+		  
+		return URLImagenes;
+ 
+			
+		},
+	error: function (XmlHttpRequest, textStatus, errorThrown) { alert('OData Select Failed: ' + odataSelect); }
+	  }); 
+}

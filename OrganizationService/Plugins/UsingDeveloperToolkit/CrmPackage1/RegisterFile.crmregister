@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Register xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://schemas.microsoft.com/crm/2011/tools/pluginregistration">
+  <Solutions>
+    <Solution Assembly="UsingDeveloperToolkit.dll" Id="c507f268-10b6-419a-aeea-6c0a1c1906f8" IsolationMode="Sandbox" SourceType="Database">
+      <PluginTypes>
+        <clear />
+        <Plugin Description="Plug-in to Create of contact" FriendlyName="Create of contact" Name="UsingDeveloperToolkit.PostOperationcontactCreate" Id="6848b1b2-ddd8-472f-8388-6595a9b347c7" TypeName="UsingDeveloperToolkit.PostOperationcontactCreate">
+          <Steps>
+            <clear />
+            <Step AsyncAutoDelete="false" Name="Create of contact" Description="Create of contact" Id="7d7a37b5-ce81-e711-80fc-e0071b6e5e61" ImpersonatingUserId="00000000-0000-0000-0000-000000000000" MessageName="Create" Mode="Synchronous" PrimaryEntityName="contact" Rank="1" Stage="PostOutsideTransaction" SupportedDeployment="ServerOnly" MessageEntityId="00000000-0000-0000-0000-000000000000">
+              <Images />
+            </Step>
+          </Steps>
+        </Plugin>
+        <Plugin Description="Plug-in to Create of contact" FriendlyName="Create of contact" Name="UsingDeveloperToolkit.PreOperationcontactCreate" Id="2cafb522-eb27-466e-b354-94069933b7d9" TypeName="UsingDeveloperToolkit.PreOperationcontactCreate">
+          <Steps>
+            <clear />
+            <Step AsyncAutoDelete="false" Name="Create of contact" Description="Create of contact" Id="34b2373f-d381-e711-80f8-e0071b685921" ImpersonatingUserId="00000000-0000-0000-0000-000000000000" MessageName="Create" Mode="Synchronous" PrimaryEntityName="contact" Rank="1" Stage="PreInsideTransaction" SupportedDeployment="ServerOnly" MessageEntityId="00000000-0000-0000-0000-000000000000">
+              <Images />
+            </Step>
+          </Steps>
+        </Plugin>
+      </PluginTypes>
+    </Solution>
+  </Solutions>
+  <XamlWorkflows />
+</Register>

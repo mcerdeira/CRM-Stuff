@@ -1,0 +1,7 @@
+function testplugin()
+{
+    Xrm.Page.getAttribute("axx_procesarbonificaciones").setValue(true);
+    Xrm.Page.getAttribute("axx_procesarbonificaciones").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_actualizadodesdeinterfacecrm").setValue(true);
+    //Xrm.Page.getAttribute("axx_actualizadodesdeinterfacecrm").setSubmitMode("always");
+}

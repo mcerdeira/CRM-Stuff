@@ -1,0 +1,1 @@
+Xrm.Page.getControl("new_tipodemovimiento").removeOption(805240006);

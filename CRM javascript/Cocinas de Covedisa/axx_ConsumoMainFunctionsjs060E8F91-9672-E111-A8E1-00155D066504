@@ -1,0 +1,11 @@
+function completarNombre(){
+  var contacto = Xrm.Page.getAttribute("axx_contactoid").getValue();
+  var establecimiento = Xrm.Page.getAttribute("axx_establecimiento").getValue();
+  var fecha = Xrm.Page.getAttribute("axx_fecha").getValue();
+  var namefield = Xrm.Page.getAttribute("axx_name");
+
+  if(contacto && contacto[0] && establecimiento && establecimiento[0] && fecha){
+	fecha = fecha.formatDate("shortDate");
+    namefield.setValue(contacto[0].name + " - " + establecimiento[0].name + " [" +  fecha + "]");
+  }
+}

@@ -1,0 +1,13 @@
+function tieneEmail()
+{
+
+  if (Xrm.Page.getAttribute("axx_tieneemail").getValue() == true)
+  {
+    Xrm.Page.getControl("emailaddress1").setDisabled(false);
+  }
+  else
+  {
+    Xrm.Page.getControl("emailaddress1").setDisabled(true);
+  }
+
+}

@@ -1,0 +1,120 @@
+function ValidateProvince()
+{
+ var sCountry;
+ var sProvince;
+
+ if(Xrm.Page.getAttribute('address1_country').getValue() != null)
+ {
+  sCountry = NormalizeString(Xrm.Page.getAttribute('address1_country').getValue());
+
+  if((Xrm.Page.getAttribute('address1_country').getValue()).toLowerCase() == 'argentina')
+  {
+   Xrm.Page.getAttribute('address1_country').setValue('Argentina');
+ 
+   if(Xrm.Page.getAttribute('address1_stateorprovince').getValue() != null)
+   {
+    sProvince = NormalizeString(Xrm.Page.getAttribute('address1_stateorprovince').getValue());
+ 
+    switch (sProvince)
+    {
+     case 'buenos aires':
+       sProvince = 'Buenos Aires';
+       break;
+     case 'capital federal':
+       sProvince = 'Capital Federal';
+       break;
+     case 'catamarca':
+       sProvince = 'Catamarca';
+       break;
+     case 'chaco':
+       sProvince = 'Chaco';
+       break;
+     case 'chubut':
+       sProvince = 'Chubut';
+       break;
+     case 'cordoba':
+       sProvince = 'Córdoba';
+       break;
+     case 'santa cruz':
+       sProvince = 'Santa Cruz';
+       break;
+     case 'corrientes':
+       sProvince = 'Corrientes';
+       break;
+     case 'entre rios':
+       sProvince = 'Entre Ríos';
+       break;
+     case 'santiago del estero':
+       sProvince = 'Santiago del Estero';
+       break;
+     case 'formosa':
+       sProvince = 'Formosa';
+       break;
+     case 'jujuy':
+       sProvince = 'Jujuy';
+       break;
+     case 'san luis':
+       sProvince = 'San Luis';
+       break;
+     case 'mendoza':
+       sProvince = 'Mendoza';
+       break;
+     case 'misiones':
+       sProvince = 'Misiones';
+       break;
+     case 'neuquen':
+       sProvince = 'Neuquén';
+       break;
+     case 'la pampa':
+       sProvince = 'La Pampa';
+       break;
+     case 'la rioja':
+       sProvince = 'La Rioja';
+       break;
+     case 'rio negro':
+       sProvince = 'Río Negro';
+       break;
+     case 'salta':
+       sProvince = 'Salta';
+       break;
+     case 'santa fe':
+       sProvince = 'Santa Fe';
+       break;
+     case 'san juan':
+       sProvince = 'San Juan';
+       break;
+     case 'tierra del fuego':
+       sProvince = 'Tierra del Fuego';
+       break;
+     case 'tucuman':
+       sProvince = 'Tucumán';
+       break;
+     default:
+       sProvince = 'ERROR';
+       break;
+    }
+
+    if(sProvince != 'ERROR')
+     Xrm.Page.getAttribute('address1_stateorprovince').setValue(sProvince);
+    else
+    {
+     Xrm.Page.getAttribute('address1_stateorprovince').setValue(null);
+     alert('La provincia ingresada es incorrecta para el país \'Argentina\'.');
+    }
+   }
+  }
+ }
+}
+
+function NormalizeString(Str)
+{
+  Str = Str.toLowerCase();
+  Str = Str.replace(/^\s*|\s*$/g,""); //Es equivalente a Trim(Str).
+  Str = Str.replace('á','a');
+  Str = Str.replace('é','e');
+  Str = Str.replace('í','i');
+  Str = Str.replace('ó','o');
+  Str = Str.replace('ú','u');
+  
+  return Str;
+}

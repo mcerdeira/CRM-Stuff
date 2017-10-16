@@ -1,0 +1,43 @@
+//Función auxiliar: Setea en null varios campos separados por coma
+function setNull() {
+    var aLength, i;
+    aLength = arguments.length;
+    for (i = 0; i < aLength; i++) {
+        Xrm.Page.getAttribute(arguments[i]).setValue(null);
+    }
+}
+
+function mostrarBonificaciones() {
+    //Declarar variables
+    var tipoBonificacion, seccionValor, seccionRegalo, seccionPorcentaje, tab;
+    tipoBonificacion = Xrm.Page.getAttribute("axx_tipodebonificacion").getValue();
+    tab = Xrm.Page.ui.tabs.get("_general");
+    seccionRegalo = tab.sections.get("_regalo");
+    seccionValor = tab.sections.get("_valor");
+    seccionPorcentaje = tab.sections.get("_porcentaje");
+    //Ocultar secciones:
+    seccionRegalo.setVisible(false);
+    seccionValor.setVisible(false);
+    seccionPorcentaje.setVisible(false);
+    //Mostrar secciones según el tipo de bonificacion, setear en nulo los valores no visibles
+    switch (tipoBonificacion) {
+    case 282270000:
+        //Descuento$
+        seccionValor.setVisible(true);
+        Xrm.Page.getControl("axx_descuento_money").setFocus();
+        setNull("axx_regalo", "axx_descuento_porcentaje");
+        break;
+    case 282270001:
+        //Descuento%
+        seccionPorcentaje.setVisible(true);
+        Xrm.Page.getControl("axx_descuento_porcentaje").setFocus();
+        setNull("axx_regalo", "axx_descuento_money");
+        break;
+    case 282270002:
+        //Regalo
+        seccionRegalo.setVisible(true);
+        Xrm.Page.getControl("axx_regalo").setFocus();
+        setNull("axx_descuento_porcentaje", "axx_descuento_money");
+        break;
+    }
+}

@@ -1,0 +1,193 @@
+// <snippetSDK.RetrieveData.js>
+if (typeof (SDK) == "undefined") 
+{
+    SDK = { __namespace: true }; 
+}
+// Namespace container for functions in this library.
+SDK.RetrieveData =
+{
+    _Context: function () {
+        var errorMessage = "Context is not available.";
+        if (typeof GetGlobalContext != "undefined") {
+            return GetGlobalContext();
+        }
+        else {
+            if (typeof Xrm != "undefined") {
+                return Xrm.Page.context;
+            }
+            else {
+                return new Error(errorMessage);
+            }
+        }
+    },
+    _ServerUrl: function () {///<summary>
+        /// Private function used to establish the path to the SOAP endpoint based on context
+        /// provided by the Xrm.Page object or the context object returned by the GlobalContext object.
+        ///</summary>
+        
+        //var ServerUrl = this._Context().getServerUrl();
+        var ServerUrl = window.location.protocol + "//" + 
+                        window.location.hostname  + ":" + 
+                        window.location.port + "/" + 
+                        this._Context().getOrgUniqueName();
+        
+        if (ServerUrl.match(/\/$/)) {
+            ServerUrl = ServerUrl.substring(0, ServerUrl.length - 1);
+        }
+        return ServerUrl + "/XRMServices/2011/Organization.svc/web";
+    },
+
+    RetrieveRequestAsync: function (entityLogicalName, Id, columnSet, successCallBack, errorCallBack) {
+        //        debugger;
+        var request = "<Execute xmlns=\"http://schemas.microsoft.com/xrm/2011/Contracts/Services\" xmlns:i=\"http://www.w3.org/2001/XMLSchema-instance\">";
+        request += "<request i:type=\"a:RetrieveRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\">";
+        request += "<a:Parameters xmlns:b=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\">";
+        request += "<a:KeyValuePairOfstringanyType>";
+        request += "<b:key>Target</b:key>";
+        request += "<b:value i:type=\"a:EntityReference\">";
+        request += "<a:Id>" + Id + "</a:Id>";
+        request += "<a:LogicalName>" + entityLogicalName + "</a:LogicalName>";
+        request += "<a:Name i:nil=\"true\" />";
+        request += "</b:value>";
+        request += "</a:KeyValuePairOfstringanyType>";
+        request += "<a:KeyValuePairOfstringanyType>";
+        request += "<b:key>ColumnSet</b:key>";
+        request += "<b:value i:type=\"a:ColumnSet\">";
+        if (columnSet != null && columnSet.length > 0) {
+            request += "<a:AllColumns>false</a:AllColumns>";
+        }
+        else {
+            request += "<a:AllColumns>true</a:AllColumns>";
+        }
+        request += "<a:Columns xmlns:c=\"http://schemas.microsoft.com/2003/10/Serialization/Arrays\">";
+        if (columnSet != null && columnSet.length > 0) {
+            for (var i = 0; i < columnSet.length; i++) {
+                request += "<c:string>" + columnSet[i] + "</c:string>";
+            }
+        }
+        request += "</a:Columns>";
+        request += "</b:value>";
+        request += "</a:KeyValuePairOfstringanyType>";
+        request += "</a:Parameters>";
+        request += "<a:RequestId i:nil=\"true\" />";
+        request += "<a:RequestName>Retrieve</a:RequestName>";
+        request += "</request>";
+        request += "</Execute>";
+
+        request = this._getSOAPWrapper(request);
+
+        var req = new XMLHttpRequest();
+        req.open("POST", this._ServerUrl(), true);
+        req.setRequestHeader("Accept", "application/xml, text/xml, */*");
+        req.setRequestHeader("Content-Type", "text/xml; charset=utf-8");
+        req.setRequestHeader("SOAPAction", this._Action.Execute);
+        req.onreadystatechange = function () { SDK.RetrieveData._returnRetrieveRequest(req, successCallBack, errorCallBack) };
+        req.send(request);
+    },
+
+
+    _returnRetrieveRequest: function (resp, successCallBack, errorCallBack) {
+        if (resp.readyState == 4 /* complete */) {
+            if (resp.status == 200) {
+                //Success				
+                var entityAttributesNodes = resp.responseXML.selectNodes("//a:Attributes/a:KeyValuePairOfstringanyType");
+                var attributeCollection = new Array();
+                for (var i = 0; i < entityAttributesNodes.length; i++) {
+                    var attribute = this._getAttributeData(entityAttributesNodes[i]);
+                    attributeCollection.push(attribute);
+                }
+                successCallBack(attributeCollection);
+            }
+            else {
+                errorCallBack(this._getError(resp));
+            }
+        }
+    },
+
+    _getAttributeData: function (KeyValuePairOfstringanyType) {
+        var attributeType = KeyValuePairOfstringanyType.selectSingleNode("b:value").attributes.getNamedItem("i:type").text;
+        var attributeName = KeyValuePairOfstringanyType.selectSingleNode("b:key").text; //b:key
+        var attributeValue;
+        switch (attributeType) {
+            case "c:int":
+            case "c:string":
+            case "c:guid":
+                attributeValue = KeyValuePairOfstringanyType.selectSingleNode("b:value").text;
+                break;
+            case "a:Money":
+            case "a:OptionSetValue":
+            case "c:dateTime":
+            case "c:double":
+            case "c:decimal":
+            case "c:boolean":
+                attributeValue = KeyValuePairOfstringanyType.parentNode.parentNode.selectNodes("a:FormattedValues/a:KeyValuePairOfstringstring[b:key='" + attributeName + "']/b:value")[0].text
+                break;
+            case "a:EntityReference":
+                //a:Name
+                attributeValue = KeyValuePairOfstringanyType.selectSingleNode("b:value/a:Name").text;
+                break;
+            default:
+                attributeValue = KeyValuePairOfstringanyType.selectSingleNode("b:value").text;
+        }
+        var attribute = new Object();
+        attribute.attributeName = attributeName;
+        attribute.attributeValue = attributeValue;
+        attribute.displayName = "";
+        return attribute;
+    },
+
+    _Action: {
+        Execute: "http://schemas.microsoft.com/xrm/2011/Contracts/Services/IOrganizationService/Execute"
+    },
+    _getSOAPWrapper: function (request) {
+        ///<summary>
+        /// Private function that wraps a soap envelope around a request.
+        ///</summary>
+        var SOAP = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"><soapenv:Body>";
+        SOAP += request;
+        SOAP += "</soapenv:Body></soapenv:Envelope>";
+        return SOAP;
+    },
+    _getError: function (resp) {
+        ///<summary>
+        /// Private function that attempts to parse errors related to connectivity or WCF faults.
+        ///</summary>
+        ///<param name="resp" type="XMLHttpRequest">
+        /// The XMLHttpRequest representing failed response.
+        ///</param>
+
+        //Error descriptions come from http://support.microsoft.com/kb/193625
+        if (resp.status == 12029)
+        { return new Error("The attempt to connect to the server failed."); }
+        if (resp.status == 12007)
+        { return new Error("The server name could not be resolved."); }
+        var faultXml = resp.responseXML;
+        var errorMessage = "Unknown (unable to parse the fault)";
+        if (typeof faultXml == "object") {
+
+            var bodyNode = faultXml.firstChild.firstChild;
+
+            //Retrieve the fault node
+            for (var i = 0; i < bodyNode.childNodes.length; i++) {
+                var node = bodyNode.childNodes[i];
+
+                //NOTE: This comparison does not handle the case where the XML namespace changes
+                if ("s:Fault" == node.nodeName) {
+                    for (var j = 0; j < node.childNodes.length; j++) {
+                        var faultStringNode = node.childNodes[j];
+                        if ("faultstring" == faultStringNode.nodeName) {
+                            errorMessage = faultStringNode.text;
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        return new Error(errorMessage);
+
+    },
+    __namespace: true
+};
+// </snippetSDK.RetrieveData.js>

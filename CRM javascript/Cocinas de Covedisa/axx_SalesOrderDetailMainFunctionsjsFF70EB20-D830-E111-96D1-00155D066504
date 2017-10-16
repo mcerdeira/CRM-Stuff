@@ -1,0 +1,602 @@
+function refreshRibbontest()
+{
+  Xrm.Page.ui.refreshRibbon();
+}
+
+function sinPlanificacionButton()
+{
+  Xrm.Page.getAttribute("axx_fueradeplanificacion").setValue(true);
+  alert("sin Planif");
+  Xrm.Page.ui.refreshRibbon();
+}
+
+function conPlanificacionButton()
+{
+  Xrm.Page.getAttribute("axx_fueradeplanificacion").setValue(false);
+  alert("con Planif");
+  Xrm.Page.ui.refreshRibbon();
+}
+
+/// <reference path="sdk.jquery.js" />
+/// <reference path="jquery_1.6.4.min.js" />
+function groupOnLoad(){
+  //Funciones incluidas en esta libreria.
+  setDefaultUnit(true);
+  cargarTotales();
+  
+  //Requieren de la librería axx_/General/GeneralFunctions.js
+  //clickRibbon();
+  setWindowSize();
+  
+  //Establecer que el pedido procesará bonificaciones:
+  var esCreate = Xrm.Page.ui.getFormType() == 1;
+  var noEsWeb = (Xrm.Page.getAttribute("axx_webordernumber") != null) && (Xrm.Page.getAttribute("axx_webordernumber") != null);
+  
+  if ( esCreate && noEsWeb ){  
+    Xrm.Page.getAttribute("axx_procesarbonificaciones").setValue(true);
+    Xrm.Page.getAttribute("axx_procesarbonificaciones").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_actualizadodesdeinterfacecrm").setValue(true);
+    Xrm.Page.getAttribute("axx_actualizadodesdeinterfacecrm").setSubmitMode("always");
+  }
+}
+
+function cargarTotales(){
+  var qtty =  Xrm.Page.getAttribute("quantity").getValue();
+  var prc =   Xrm.Page.getAttribute("priceperunit").getValue();
+  var vDcnt = Xrm.Page.getAttribute("volumediscountamount").getValue();
+
+  Xrm.Page.getAttribute("axx_precioxcantidad").setValue(qtty*prc);
+  Xrm.Page.getAttribute("axx_precioxcantidad").setSubmitMode("always");
+  Xrm.Page.getAttribute("axx_descuentoporvolumentotal").setValue(qtty*vDcnt);
+  Xrm.Page.getAttribute("axx_descuentoporvolumentotal").setSubmitMode("always");
+}
+
+function setDefaultUnit(isLoad){
+
+if (isLoad && Xrm.Page.ui.getFormType() != 1){return}
+ 
+//Create an array to set as the DataValue for the lookup control. 
+lookupData = new Array(); 
+
+//Create an Object add to the array. 
+var lookupItem= new Object(); 
+
+//Set the id, typename, and name properties to the object. 
+//lookupItem.id = 'BBB06298-BAF3-44C5-AB27-458FA2295D61'; 
+lookupItem.id = '93F404DE-635A-4E3C-A039-3911597878B6'; 
+lookupItem.typename = 'uom'; 
+lookupItem.name = 'UN'; 
+
+// Add the object to the array. 
+lookupData[0] = lookupItem
+
+// Set the value of the lookup field to the value of the array. 
+crmForm.all.uomid.DataValue = lookupData; 
+}
+
+function BrowserClose(){
+  window.onbeforeunload = function(){};
+  window.top.window.open('', '_self', ''); 
+  window.top.window.close();
+}
+
+function retrieveSalesOrderDetail(salesOrderDetailId){
+ var fieldsToRetrieve = "axx_BonificacionCF,ExtendedAmount,ManualDiscountAmount,PricePerUnit,VolumeDiscountAmount,axx_StockAlCrearLinea";
+ thisSodID = currentSodID;
+ //Actualizar las notificaciones
+ NotificacionStock();
+ 
+ SDK.JQuery.retrieveRecord(
+     salesOrderDetailId,
+     "SalesOrderDetail",
+     fieldsToRetrieve, null,
+     retrieveSuccessed,
+     errorHandler
+   );
+  
+  //Actualizar el mensaje de cierre:
+  mensajeDeCierre();
+
+}
+
+function retrieveSuccessed(salesorderdetail){
+  var xat = Xrm.Page.getAttribute;
+  
+  var axx_bonificacioncf, extendedamount, manualdiscountamount, priceperunit, volumediscountamount;
+  
+  axx_bonificacioncf = salesorderdetail.axx_BonificacionCF;
+  axx_bonificacioncf = isNumber(axx_bonificacioncf) ? parseFloat(axx_bonificacioncf) : null;
+  
+  extendedamount = salesorderdetail.ExtendedAmount.Value;
+  extendedamount = isNumber(extendedamount) ? parseFloat(extendedamount) : null;
+  
+  manualdiscountamount = salesorderdetail.ManualDiscountAmount.Value;
+  manualdiscountamount = isNumber(manualdiscountamount) ? parseFloat(manualdiscountamount) : null;
+  
+  priceperunit = salesorderdetail.PricePerUnit.Value;
+  priceperunit = isNumber(priceperunit) ? parseFloat(priceperunit) : null;
+  
+  volumediscountamount = salesorderdetail.VolumeDiscountAmount.Value;
+  volumediscountamount = isNumber(volumediscountamount) ? parseFloat(volumediscountamount) : null;
+
+  axx_stockalcrearlinea = salesorderdetail.axx_StockAlCrearLinea;
+  axx_stockalcrearlinea = isNumber(axx_stockalcrearlinea) ?  parseInt(axx_stockalcrearlinea,10) : -1;
+  
+  xat("axx_bonificacioncf").setValue(axx_bonificacioncf);
+  xat("extendedamount").setValue(extendedamount);
+  xat("manualdiscountamount").setValue(manualdiscountamount);
+  xat("priceperunit").setValue(priceperunit);
+  xat("volumediscountamount").setValue(volumediscountamount);
+  xat("axx_stockalcrearlinea").setValue(axx_stockalcrearlinea);
+  cargarTotales();
+  
+  //Actualizar las notificaciones
+  NotificacionStock();
+}
+
+function isNumber(value) { 
+    if ((undefined === value) || (null === value)) { 
+        return false; 
+    } 
+    if (typeof value == 'number') { 
+        return true; 
+    } 
+    return !isNaN(value - 0); 
+} 
+
+function updateSalesOrderDetail(salesOrderDetailId,salesorderdetail, sync){
+
+  jQuery.support.cors = true;
+  SDK.JQuery.updateRecord(
+     salesOrderDetailId,
+     salesorderdetail,
+     "SalesOrderDetail",
+     function () {
+        retrieveSalesOrderDetail(salesOrderDetailId);
+     },
+     errorHandler,
+     sync
+   );
+}
+
+function onChangeCreateUpdate(confirmar, sync){
+  var xat = Xrm.Page.getAttribute;
+  var product = xat("productid").getValue();
+  
+  sync = (typeof sync == "undefined") ? false : sync;
+  confirmar = (typeof confirmar == "undefined") ? false : confirmar;
+  
+  //if(product && product[0] && xat("quantity").getValue() > 0){
+  if(product && product[0]){
+    if(!xat("uomid").getValue()){setDefaultUnit()}
+    
+    var salesorderdetail = {};
+    
+    //Este campo especifica que se disparará el plugin de bonificaciones.
+    salesorderdetail.axx_actualizadodesdeinterfacecrm = true;
+        
+    var xat = Xrm.Page.getAttribute;
+    var product = xat("productid").getValue()[0];
+    salesorderdetail.ProductId = { Id: product.id, LogicalName: product.typename , Name: product.name };
+    salesorderdetail.Quantity = (xat("quantity").getValue()) ? xat("quantity").getValue().toFixed(2) : (1).toFixed(2);
+    salesorderdetail.IsPriceOverridden = false;
+    var uom = xat("uomid").getValue()[0];
+    salesorderdetail.UoMId = { Id: uom.id, LogicalName: uom.typename , Name: uom.name };
+    salesorderdetail.axx_DescuentoManual = { 
+        Value: (xat("axx_descuentomanual").getValue()) ? xat("axx_descuentomanual").getValue().toFixed(2) : null
+    };
+    //salesorderdetail.axx_StockAlCrearLinea = (xat("axx_stockalcrearlinea").getValue()) ? xat("axx_stockalcrearlinea").getValue().toFixed(0) : null
+    
+    salesorderdetail.SalesOrderId = { Id: xat("salesorderid").getValue(), LogicalName: "salesorder" };
+    
+    salesorderdetail.axx_IdPedidoCabecera = xat("salesorderid").getValue();
+    
+    //Tambien es necesario actualizar este campo para el plugin de bonificaciones.
+    salesorderdetail.PricePerUnit = { 
+        Value: (xat("priceperunit").getValue()) ? xat("priceperunit").getValue().toFixed(2) : null
+    };
+    
+        
+    //Necesario para confirmar el producto y que sea considerado para calcular stock
+    salesorderdetail.axx_SinConfirmar = !confirmar; /*{ 
+        Value: !confirmar
+    };*/
+    
+    //Procesar!!!    
+    if(Xrm.Page.ui.getFormType() == 1){ //Es create
+      if(typeof currentSodID =="undefined" || currentSodID == null){
+        createSalesOrderDetail(salesorderdetail, sync);
+      
+      }else{
+        updateSalesOrderDetail(currentSodID,salesorderdetail, sync);
+      
+      }
+    }else{
+      currentSodID = Xrm.Page.data.entity.getId();
+      updateSalesOrderDetail(currentSodID,salesorderdetail, sync);
+    }   
+  }
+}
+
+function createSalesOrderDetail(salesorderdetail, sync) {
+  sync = (typeof sync == "undefined") ? false : sync;
+  
+  jQuery.support.cors = true;
+  //Create the salesorderdetail
+  SDK.JQuery.createRecord(
+     salesorderdetail,
+     "SalesOrderDetail",
+     function (salesorderdetail) {
+      currentSodID = salesorderdetail.SalesOrderDetailId;
+      retrieveSalesOrderDetail(salesorderdetail.SalesOrderDetailId);
+     },
+     errorHandler,
+     sync
+   );
+}
+
+function errorHandler(error){
+ alert(error.message);
+}
+
+function ConfirmarProducto(){
+  var stock = Xrm.Page.getAttribute("axx_stockalcrearlinea").getValue();
+  var producto = Xrm.Page.getAttribute("productid").getValue();
+  var cantidad = Xrm.Page.getAttribute("quantity").getValue();
+  var axx_sinconfirmar = Xrm.Page.getAttribute("axx_sinconfirmar");
+  
+  //if(producto != null &&  cantidad != null && cantidad != 0){
+  if(producto != null &&  cantidad != null && cantidad != null){
+    if(stock == 0){
+      alert("El producto se descartará al recalcular ya que no dispone de Stock");
+    }
+    onChangeCreateUpdate(true,true);    
+    BrowserClose();
+  }else{
+    alert("Debe especificar un producto y su cantidad");
+  }
+}
+
+function DescartarProducto(){
+
+  if( (typeof currentSodID != "undefined" && currentSodID != null)){
+    deleteSalesOrderDetailAndClose(currentSodID);
+    return;
+  }else{
+    if(Xrm.Page.data.entity.getId() != null && Xrm.Page.data.entity.getId() != ""){
+      deleteSalesOrderDetailAndClose(Xrm.Page.data.entity.getId());
+      return;
+    }else{
+      BrowserClose();
+    }
+  }
+}
+
+function deleteSalesOrderDetailAndClose(salesOrderDetailId) {
+ if (confirm("¿Desea descartar este Producto?")) {
+  currentSodID = null;
+  SDK.JQuery.deleteRecord(
+       salesOrderDetailId,
+       "SalesOrderDetail",
+       function () {
+        BrowserClose();
+       },
+       errorHandler
+     );
+ }
+}
+
+function mensajeDeCierre(onLoad){
+  var stock = Xrm.Page.getAttribute("axx_stockalcrearlinea").getValue();
+  var hayStock = (stock != null && stock != "" && stock != 0); 
+  detachCloseAlert();
+  
+  if(onLoad){
+    window.onbeforeunload = function(){}
+  }else{
+    if(!hayStock){
+      window.onbeforeunload = function(){ 
+        alert("El producto se ha descartado ya que no dispone de Stock");
+        BrowserClose();
+      }
+    }else{
+      window.onbeforeunload = function(){ 
+        return	"Si abandona la página, el producto quedará Confirmado\ncon las últimas modificaciones que haya realizado.\n\n" + 
+                "Utilice el botón 'Confirmar' para realizar esta acción sin\nver este mensaje, \n\n" + 
+                "O utilice el botón 'Descartar' para desechar el producto del\nPedido";
+      }
+    } 
+  }
+}
+
+function cambioCant(){
+  //Xrm.Page.data.entity.save();
+  onChangeCreateUpdate();
+}
+
+function getParentOrderAndProcess(){
+  var errorMssg = "alerta!";
+  var SalesOrderId = Xrm.Page.getAttribute("salesorderid").getValue().substr(1,36);
+  
+  if (!SalesOrderId){return}
+  
+  var organizationName = Xrm.Page.context.getOrgUniqueName();
+  var serverURL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/" + organizationName;
+
+  var odataSelect = serverURL + "/xrmservices/2011/OrganizationData.svc/SalesOrderSet?" + 
+  "$select=axx_CampanaId&" + 
+  "$filter=SalesOrderId eq guid'" + SalesOrderId + "'";
+  
+  $.ajax({
+    type: "GET",
+    contentType: "application/json; charset=utf-8",
+    datatype: "json",
+    url: odataSelect,
+    beforeSend: function (XMLHttpRequest) { XMLHttpRequest.setRequestHeader("Accept", "application/json"); },
+    success: function (data, textStatus, XmlHttpRequest){
+          // Use only one of these two methods
+          // Use for a selection that may return multiple entities
+          //ProcessReturnedEntities(data.d.results); 
+
+          // Use for a single selected entity
+          if(data.d.results.length == 0){
+            alert(errorMssg); 
+            return
+          }
+          processPedidoData(data.d.results[0]);
+        },
+    error: function (XmlHttpRequest, textStatus, errorThrown) { alert('OData Select Failed: ' + odataSelect); }
+  });
+}
+
+function processPedidoData(OneEntity){
+  var oneEntity = OneEntity;
+
+  thisOrder = {
+    Campaign: {
+      Id: oneEntity.axx_CampanaId.Id,
+      Name: oneEntity.axx_CampanaId.Name
+    }
+  }
+  //promocionTipo = oneEntity.axx_TipodeCampana.Value;
+  //promocionPagoUnico = oneEntity.axx_PermitirPagounico;
+  var productId = Xrm.Page.getAttribute("productid").getValue()[0].id.substr(1,36);
+  //asignarPrioridad(thisOrder.Campaign.Id, productId);
+  //consultarAsignarPrioridad(thisOrder.Campaign.Id, productId);
+  //asignarStock(thisOrder.Campaign.Id, productId);
+  //consultarAsignarStock(thisOrder.Campaign.Id, productId)
+  setDefaultUnit(false);
+  onChangeCreateUpdate();
+}
+
+function onChangeProducto(){
+  var objProducto, lineProductName, lineProduct;
+  
+  objProducto = Xrm.Page.getAttribute("productid").getValue();
+  Xrm.Page.getAttribute("ispriceoverridden").setValue(0);
+  Xrm.Page.getAttribute("ispriceoverridden").fireOnChange();
+  Xrm.Page.getAttribute("axx_stockalcrearlinea").setValue(null);
+  //Actualizar las notificaciones
+  NotificacionStock();
+  //Deshabilitar el botón de guardado hasta que devuelva stock.
+  //getButton("WebResource_confirmarProducto").setDisabled(true);
+  
+  if(objProducto && objProducto[0]){
+    poductName =objProducto[0].name;
+    productId = objProducto[0].id.substr(1,36);
+    
+    if(typeof thisOrder == "undefined"){
+      getParentOrderAndProcess();
+
+    }else{
+      //asignarPrioridad(thisOrder.Campaign.Id, productId);
+      //consultarAsignarPrioridad(thisOrder.Campaign.Id, productId);
+      //asignarStock(thisOrder.Campaign.Id, productId);
+      //consultarAsignarStock(thisOrder.Campaign.Id, productId)
+      setDefaultUnit(false);
+      onChangeCreateUpdate();
+    }
+  }
+}
+
+/* Se reemplazan estas funciones por un plugin de consulta de stock y prioridad:
+function consultarAsignarPrioridad(campaignId, productLineId){
+var productServiceUrl = window.location.protocol + "//" + window.location.hostname + "/StockService-testing/StockService.svc";
+var soapMessage =
+"<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tem=\"http://tempuri.org/\" xmlns:stoc=\"http://schemas.datacontract.org/2004/07/StockService\">" +
+   "<soapenv:Header/>"  +
+     "<soapenv:Body>" + 
+      "<tem:IsPriority>" + 
+         "<tem:wsIn>" +
+            "<stoc:CampaignId>"+campaignId+"</stoc:CampaignId>" +
+            "<stoc:ItemId>"+productLineId+"</stoc:ItemId>" +
+         "</tem:wsIn>" +
+      "</tem:IsPriority>" +
+   "</soapenv:Body>" +
+"</soapenv:Envelope>";
+
+
+jQuery.support.cors = true;
+$.ajax({
+url: productServiceUrl,
+type: "POST",
+crossDomain: true,
+username: "Covedisa\\CrmAdmin",
+password: "Coved159",
+dataType: "xml",
+data: soapMessage,
+beforeSend: function(xhr) { xhr.setRequestHeader("SOAPAction", "http://tempuri.org/IStockService/IsPriority"); },
+complete: setStockPriority,
+contentType: "text/xml; charset=\"utf-8\""
+}); 
+
+return false;
+
+}
+
+function setStockPriority(xmlHttpRequest, status){
+ var stockPriority = $(xmlHttpRequest.responseXML).text();
+ stockPriority = (stockPriority.toString().toLowerCase() == "true") ? true : false;
+ Xrm.Page.getAttribute("axx_prioridadstock").setValue(stockPriority);
+ Xrm.Page.getAttribute("axx_prioridadstock").setSubmitMode("always");
+}
+
+function consultarAsignarStock(campaignId, productLineId){
+var productServiceUrl = window.location.protocol + "//" + window.location.hostname + "/StockService-testing/StockService.svc";
+var soapMessage = "" + 
+"<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tem=\"http://tempuri.org/\" xmlns:stoc=\"http://schemas.datacontract.org/2004/07/StockService\">" +
+   "<soapenv:Header/>"  +
+     "<soapenv:Body>" + 
+      "<tem:GetStock>" + 
+         "<tem:wsIn>" +
+            "<stoc:CampaignId>" + campaignId + "</stoc:CampaignId>" +
+            "<stoc:ItemId>" + productLineId + "</stoc:ItemId>" +
+         "</tem:wsIn>" +
+      "</tem:GetStock>" +
+   "</soapenv:Body>" +
+"</soapenv:Envelope>";
+
+jQuery.support.cors = true;
+$.ajax({
+  url: productServiceUrl,
+  type: "POST",
+  crossDomain: true,
+  username: "Covedisa\\CrmAdmin",
+  password: "Coved159",
+  dataType: "xml",
+  data: soapMessage,
+  beforeSend: function(xhr) { xhr.setRequestHeader("SOAPAction", "http://tempuri.org/IStockService/GetStock"); },
+  complete: setStockAmount,
+  contentType: "text/xml; charset=\"utf-8\""
+}); 
+return false;
+}
+
+function setStockAmount(xmlHttpRequest, status){
+  var currentStock = Number( $(xmlHttpRequest.responseXML).text() );
+  currentStock = (currentStock > 0) ? currentStock : 0;
+  Xrm.Page.getAttribute("axx_stockalcrearlinea").setValue(currentStock);
+  Xrm.Page.getAttribute("axx_stockalcrearlinea").setSubmitMode("never");
+  
+  //Actualizar las notificaciones
+  NotificacionStock();
+  //Actualizar el mensaje de cierre:
+  mensajeDeCierre();
+  
+  //Habilitar el botón de guardado
+  //getButton("WebResource_confirmarProducto").setDisabled(false);
+}
+*/
+
+function NotificacionStock() {
+    var currentStock = Xrm.Page.getAttribute("axx_stockalcrearlinea").getValue();
+    var notificationsArea = document.getElementById('crmNotifications');
+    var stockMessage = "No es posible utilizar este producto dado que no dispone de stock";
+    
+    if (notificationsArea == null){
+        alert('Error al mostrar notificaciones: Div not found');
+        return;
+    }
+    
+    if(currentStock == 0){
+      /*
+      The integer is the notification type
+      1 = Error
+      2 = Warning
+      3 = Info
+      notificationsArea.AddNotification("<;unique value>;", 3, "","Your text here");
+      */
+      /*Create the notification*/
+      notificationsArea.AddNotification("1001", 2, "1001", stockMessage);
+
+    }else{
+      /*clear out notification area*/
+      notificationsArea.SetNotifications(null, null);
+    }
+}
+
+function axxReCalculate(){
+  var noEsWeb = (Xrm.Page.getAttribute("axx_webordernumber") != null) && (Xrm.Page.getAttribute("axx_webordernumber") != null);
+
+  if ( noEsWeb ){  
+    Xrm.Page.getAttribute("axx_procesarbonificaciones").setValue(true);
+    Xrm.Page.getAttribute("axx_procesarbonificaciones").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_actualizadodesdeinterfacecrm").setValue(true);
+    Xrm.Page.getAttribute("axx_actualizadodesdeinterfacecrm").setSubmitMode("always");
+  }
+  
+  crmForm.SubmitCrmForm(1,true,true,false);
+}
+
+function disableOnReadOnly(webResource){
+	var formType = Xrm.Page.ui.getFormType();
+	if(formType != 1 || formType != 2){
+	  //Deshabilitar los botones de Cierre
+		getButton(webResource).setDisabled(true);
+		//getButton("WebResource_confirmarProducto").setDisabled(true);
+	}
+}
+
+
+function onLoadProductOrder()
+{
+  disableArray = ["productid", "axx_stockalcrearlinea", "quantity", "priceperunit", 
+                  "axx_precioxcantidad", "axx_bonificacioncf", "axx_descuentoporvolumentotal",
+                  "ispriceoverridden", "manualdiscountamount", "uomid","isproductoverridden",
+                  "productdescription","quantityshipped","willcall","quantitycancelled",
+                  "quantitybackordered","axx_idpedidocabecera","volumediscountamount",
+                  "axx_prioridadstock","description","axx_sinconfirmar","axx_fueradeplanificacion"];
+  
+  hideArray = ["uomid", "ispriceoverridden","isproductoverridden","productdescription",
+               "quantityshipped","willcall","quantitycancelled","quantitybackordered",
+               "axx_idpedidocabecera","volumediscountamount","axx_prioridadstock","description",
+               "axx_sinconfirmar","axx_fueradeplanificacion"];
+  
+  myFunc = function()
+  {
+    disableAll(disableArray, hideArray);
+  }
+  
+  window.setTimeout(myFunc, 1000);
+}
+
+
+function disableAll(disableArray, hideArray)
+{
+  var arrayLength = disableArray.length;
+  
+  for (i = 0; i < arrayLength; i++)
+  {
+    Xrm.Page.getControl(disableArray[i]).setDisabled(true);
+  }
+  
+  arrayLength = hideArray.length;
+  
+  for (i = 0; i < arrayLength; i++)
+  {
+    Xrm.Page.getControl(hideArray[i]).setDisabled(true);
+  }  
+}
+
+function onLoadProductOrder()
+{
+  disableArray = ["productid", "axx_stockalcrearlinea", "quantity", "priceperunit", 
+                  "axx_precioxcantidad", "axx_bonificacioncf", "axx_descuentoporvolumentotal",
+                  "ispriceoverridden", "manualdiscountamount", "uomid","isproductoverridden",
+                  "productdescription","quantityshipped","willcall","quantitycancelled",
+                  "quantitybackordered","axx_idpedidocabecera","volumediscountamount",
+                  "axx_prioridadstock","description","axx_sinconfirmar","axx_fueradeplanificacion"];
+  
+  hideArray = ["uomid", "ispriceoverridden","isproductoverridden","productdescription",
+               "quantityshipped","willcall","quantitycancelled","quantitybackordered",
+               "axx_idpedidocabecera","volumediscountamount","axx_prioridadstock","description",
+               "axx_sinconfirmar","axx_fueradeplanificacion"];
+  
+  myFunc = function()
+  {
+    disableAll(disableArray, hideArray);
+    Xrm.Page.ui.tabs.get(0).sections.get("LineaProducto_section_3").setVisible(false);
+  }
+  
+  window.setTimeout(myFunc, 200);
+}

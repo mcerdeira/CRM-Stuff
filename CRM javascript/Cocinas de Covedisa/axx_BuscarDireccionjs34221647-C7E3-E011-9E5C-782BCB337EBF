@@ -1,0 +1,253 @@
+// Create Dynamic Button for CRM 5
+function removeChildNodes(ctrl)
+{ 
+  while (ctrl.childNodes[0]) 
+  { 
+    ctrl.removeChild(ctrl.childNodes[0]); 
+  }
+}
+
+function CreateButtonCRM5(fieldName, buttonText, buttonWidth, iconName, clickEvent)
+{
+  functiontocall=clickEvent;
+  crmForm.all.item(fieldName + "_c").style.display = "none";
+
+  var li = document.createElement("DIV");
+  li.setAttribute('id', fieldName + 'DIV');
+  li.setAttribute('className', 'ms-crm-Menu');
+  li.setAttribute('title', buttonText);
+  li.setAttribute('onclick', functiontocall);
+  li.setAttribute('onmousedown', push_custom_button);
+  li.setAttribute('onmouseup', release_custom_button);
+  li.style.width=buttonWidth;
+  li.style.cursor="hand";
+  li.style.textAlign="center";
+  li.style.overflow="hidden";
+
+  var span = document.createElement("span");
+  span.setAttribute('className', 'ms-crm-Menu-Label');
+  span.setAttribute('id', fieldName + 'Span');
+  span.style.cursor = "hand";
+  li.appendChild(span);
+  li.onmouseover = function() { span.setAttribute('className', 'ms-crm-Menu-Label-Hovered');}
+  li.onmouseout = function() { span.setAttribute('className', 'ms-crm-Menu-Label'); }
+
+  var a = document.createElement("a");
+  a.setAttribute('id', fieldName + 'A');
+  a.setAttribute('className', 'ms-crm-Menu-Label');
+  a.onclick = function() { return false; }
+  a.setAttribute('target', '_self');
+  a.setAttribute('href', 'javascript:onclick();');
+  a.style.cursor = "hand";
+  span.appendChild(a);
+
+  var img = document.createElement("img");
+  img.setAttribute('id', fieldName + 'Img');
+  img.setAttribute('className', 'ms-crm-Menu-ButtonFirst');
+  img.setAttribute('src', '/_imgs/' + iconName);
+  img.style.cursor = "hand";
+
+  var span2 = document.createElement("span");
+  span2.setAttribute('id', fieldName + 'Span2');
+  span2.setAttribute('className', 'ms-crm-MenuItem-TextRTL');
+  span2.innerText = "  " + buttonText;
+  span2.style.cursor = "hand";
+  a.appendChild(img);
+  a.appendChild(span2);
+
+  removeChildNodes(crmForm.all.item(fieldName + "_d"));
+  crmForm.all.item(fieldName + "_d").appendChild(li);
+}
+
+function push_custom_button()
+{
+  window.event.srcElement.style.marginLeft="1px";
+  window.event.srcElement.style.marginTop="1px";
+}
+
+function release_custom_button()
+{
+  window.event.srcElement.style.marginLeft="0px";
+  window.event.srcElement.style.marginTop="0px";
+}
+
+function getBillToAddress(){
+  var Customerfield;
+  var customerType;
+  
+  var tipoDeCliente = Xrm.Page.getAttribute("axx_tipodecliente").getValue();
+  var Customerfield = (tipoDeCliente == 0) ? "axx_contactid" : "axx_accountid";
+  var customerType =  (tipoDeCliente == 0) ? 2 : 1;
+  
+  var rAddress = getAddressFromLookup(Customerfield,customerType);
+  
+  if (rAddress != null){
+    //Xrm.Page.getAttribute("axx_billtonombrededireccion").setValue(rAddress[0].value);
+    //Xrm.Page.getAttribute("axx_billtocodigopostal").setValue(rAddress[1].value);
+    //Xrm.Page.getAttribute("axx_billtociudad").setValue(rAddress[2].value);
+    //Xrm.Page.getAttribute("axx_billtocalle1").setValue(rAddress[3].value);
+    //Xrm.Page.getAttribute("axx_billtocalle2").setValue(rAddress[6].value);
+    //Xrm.Page.getAttribute("axx_billtocalle3").setValue(rAddress[7].value);        
+    //Xrm.Page.getAttribute("axx_billtoestadoprovincia").setValue(rAddress[4].value);
+    //Xrm.Page.getAttribute("axx_billtopaisregion").setValue(rAddress[5].value);
+    //Xrm.Page.getAttribute("axx_billtotelefono").setValue(rAddress[8].value);
+    //Xrm.Page.getAttribute("axx_billtofax").setValue(rAddress[9].value);
+
+    //Xrm.Page.getAttribute("axx_billtonombrededireccion").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtocodigopostal").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtociudad").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtocalle1").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtocalle2").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtocalle3").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtoestadoprovincia").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtopaisregion").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtotelefono").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtofax").setSubmitMode("always");
+
+  }
+}
+
+function getShipToAddress(){
+  var envioDiferenciado = Xrm.Page.getAttribute("axx_enviodiferenciado").getValue();
+  var Customerfield;
+  var customerType;
+  
+  if (envioDiferenciado){
+    var Customerfield = "axx_enviaracontacto";
+    var customerType =  2;    
+  }
+  else
+  {
+    var tipoDeCliente = Xrm.Page.getAttribute("axx_tipodecliente").getValue();
+    var Customerfield = (tipoDeCliente == 0) ? "axx_contactid" : "axx_accountid";
+    var customerType =  (tipoDeCliente == 0) ? 2 : 1;
+  }
+  
+  var rAddress = getAddressFromLookup(Customerfield,customerType);
+  
+  if (rAddress != null){
+
+    Xrm.Page.getAttribute("axx_shiptonombrededireccion").setValue(rAddress[1].value);
+    //Xrm.Page.getAttribute("axx_shiptocategoriadireccion").setValue(rAddress[1].value);
+    Xrm.Page.getAttribute("axx_shiptocalle1").setValue(rAddress[2].value);
+    Xrm.Page.getAttribute("axx_shiptonumero").setValue(rAddress[3].value);
+    Xrm.Page.getAttribute("axx_shiptopiso").setValue(rAddress[4].value);
+    Xrm.Page.getAttribute("axx_shiptodepartamento").setValue(rAddress[5].value);
+    Xrm.Page.getAttribute("axx_shiptocodigopostal").setValue(rAddress[7].value);
+    Xrm.Page.getAttribute("axx_shiptotelefono").setValue(rAddress[6].value);
+    Xrm.Page.getAttribute("axx_shiptopaisregion").setValue(rAddress[8].value);
+    Xrm.Page.getAttribute("axx_shiptoestadoprovincia").setValue(rAddress[9].value);
+    Xrm.Page.getAttribute("axx_shiptociudad").setValue(rAddress[10].value);
+    Xrm.Page.getAttribute("axx_shiptolocalidad").setValue(rAddress[11].value);
+    Xrm.Page.getAttribute("axx_shiptobarrio").setValue(rAddress[12].value);
+    Xrm.Page.getAttribute("axx_shiptojurisdiccion").setValue(rAddress[13].value);
+    Xrm.Page.getAttribute("axx_addresscomments").setValue(rAddress[14].value);
+
+    Xrm.Page.getAttribute("axx_shiptonombrededireccion").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_shiptocategoriadireccion").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptocalle1").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptonumero").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptopiso").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptodepartamento").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptocodigopostal").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptotelefono").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptopaisregion").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptoestadoprovincia").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptociudad").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptolocalidad").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptobarrio").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptojurisdiccion").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_addresscomments").setSubmitMode("always");
+
+  }
+}
+
+function getAddressFromLookup(Customerfield,customerType) {
+  var retrievedLookupAddress = null;
+  var errorMssg = "Debe seleccionar un cliente antes de buscar direcciones";
+  var orgName = Xrm.Page.context.getOrgUniqueName();
+  var customerValue = Xrm.Page.getAttribute(Customerfield).getValue();
+  
+  if(!customerValue){ alert(errorMssg); return }    
+  
+  var custId = customerValue[0].id;
+
+  
+  var url = '/' + orgName + 
+  '/_controls/lookup/lookupsingle.aspx?class=BrowseCustomerAddress&objecttypes=1071&browse=1&bindingcolumns=line1%2cpostalcode&parentType=' + 
+  customerType + '&parentId=' + custId + '&ShowNewButton=1&ShowPropButton=1&DefaultType=1071';
+
+  var selectedAddress = window.showModalDialog(url, null, 'dialogWidth:600px;dialogHeight:350px;resizable:yes');
+
+  if (selectedAddress != null) {
+    var retrievedLookupAddress = JSON.parse(selectedAddress.items[0].values);
+  }
+  
+  return retrievedLookupAddress;
+}
+
+
+
+function borrarDireccionesOnChange(flagenvio){
+
+  if (flagenvio==false)
+  {
+    //Xrm.Page.getAttribute("axx_billtonombrededireccion").setValue(null);
+    //Xrm.Page.getAttribute("axx_billtocodigopostal").setValue(null);
+    //Xrm.Page.getAttribute("axx_billtociudad").setValue(null);
+    //Xrm.Page.getAttribute("axx_billtocalle1").setValue(null);
+    //Xrm.Page.getAttribute("axx_billtocalle2").setValue(null);
+    //Xrm.Page.getAttribute("axx_billtocalle3").setValue(null);        
+    //Xrm.Page.getAttribute("axx_billtoestadoprovincia").setValue(null);
+    //Xrm.Page.getAttribute("axx_billtopaisregion").setValue(null);
+    //Xrm.Page.getAttribute("axx_billtotelefono").setValue(null);
+    //Xrm.Page.getAttribute("axx_billtofax").setValue(null);
+
+    //Xrm.Page.getAttribute("axx_billtonombrededireccion").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtocodigopostal").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtociudad").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtocalle1").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtocalle2").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtocalle3").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtoestadoprovincia").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtopaisregion").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtotelefono").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_billtofax").setSubmitMode("always");
+  }
+
+  if (Xrm.Page.getAttribute("axx_enviaracontacto").getValue()==null){flagenvio=true;}
+
+  if (flagenvio==true)
+  {
+    Xrm.Page.getAttribute("axx_shiptonombrededireccion").setValue(null);
+    //Xrm.Page.getAttribute("axx_shiptocategoriadireccion").setValue(null);
+    Xrm.Page.getAttribute("axx_shiptocalle1").setValue(null);
+    Xrm.Page.getAttribute("axx_shiptonumero").setValue(null);
+    Xrm.Page.getAttribute("axx_shiptopiso").setValue(null);
+    Xrm.Page.getAttribute("axx_shiptodepartamento").setValue(null);
+    Xrm.Page.getAttribute("axx_shiptocodigopostal").setValue(null);
+    Xrm.Page.getAttribute("axx_shiptotelefono").setValue(null);
+    Xrm.Page.getAttribute("axx_shiptopaisregion").setValue(null);
+    Xrm.Page.getAttribute("axx_shiptoestadoprovincia").setValue(null);
+    Xrm.Page.getAttribute("axx_shiptociudad").setValue(null);
+    Xrm.Page.getAttribute("axx_shiptolocalidad").setValue(null);
+    Xrm.Page.getAttribute("axx_shiptobarrio").setValue(null);
+    Xrm.Page.getAttribute("axx_shiptojurisdiccion").setValue(null);
+
+    Xrm.Page.getAttribute("axx_shiptonombrededireccion").setSubmitMode("always");
+    //Xrm.Page.getAttribute("axx_shiptocategoriadireccion").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptocalle1").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptonumero").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptopiso").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptodepartamento").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptocodigopostal").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptotelefono").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptopaisregion").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptoestadoprovincia").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptociudad").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptolocalidad").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptobarrio").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shiptojurisdiccion").setSubmitMode("always");
+  }
+
+}

@@ -1,0 +1,214 @@
+html, body{ height:100%; width:100%}
+form {margin:0; padding:0}
+img { display: block}
+a img { border: 0}
+.clear {clear: both; overflow: hidden;height: 0px}
+.block {display: block}
+
+
+body
+{	margin: 0;
+	padding: 0;
+	background: #EAEBD8;
+	font: 1.0em trebuchet ms, georgia, arial, sans-serif}
+
+#all
+{	width: 750px; 
+	height: 800px;
+	margin: 10px auto;}
+
+	#top
+	{	background: #3056A1 url(/_img/topbg.gif);
+		border-bottom: 1px solid #FFF}
+
+	#topmenu
+	{	height: 34px;
+		background: #3056A1 url(/_img/topmenu_bg.jpg)}
+
+		#topmenu ul
+		{	margin: 0;
+			padding: 0}
+		
+		#topmenu ul li
+		{	margin: 0;
+			padding: 8px 25px 0 25px;
+			float: left;
+			list-style: none;
+			color: #FFF;
+			font: bold 11px trebuchet ms, sans-serif}
+
+		#topmenu ul li a
+		{	color: #FFF}
+
+		#topmenu ul li a:hover
+		{	color: #3CFFF8}
+
+	#center
+	{	border: 0px solid #C1C1C1;
+		border-top-width: 0px;
+		background: #FFF url(/_img/rightbg.gif) right repeat-y}
+
+		#leftcol
+		{	float: left;
+			width: 470px;
+			padding: 5px 15px}
+
+			#path
+			{	background: #EAEBD8;
+				padding: 3px 12px;
+				margin: 0 0 15px -10px;
+				font: 0.7em trebuchet ms, georgia, tahoma, sans-serif;}
+
+				#path a
+				{	color: #639DEB}
+
+				#path a:hover
+				{	color: #09008E}
+
+					
+		#rightcol
+		{	float: right;	
+			width: 248px;
+			border-top: 5px solid #FFF}
+
+				#rightcol ul
+				{	margin: 5px 0 20px 0;
+					padding: 0}
+
+				#rightcol ul li
+				{	margin: 0;
+					padding: 0 0 0 24px;
+					height: 18px;
+					list-style: none;
+					font: 0.8em trebuchet ms, georgia, tahoma, sans-serif;
+					background: url(/_img/bullet.gif) no-repeat;
+					border: 0px dotted blue}
+
+
+			.menuhdr
+			{	background: #EAEBD8 url(/_img/hdrbg.gif) right no-repeat;
+				padding: 2px 10px;
+				font: bold 0.8em trebuchet ms, georgia, tahoma, sans-serif}
+
+			#wt
+			{	font: 0.8em trebuchet ms, georgia, tahoma, sans-serif;
+				margin: 0 0 15px 0;
+				padding: 10px;}
+
+				#wt div
+				{	font-weight: bold;
+					margin-bottom: 5px}
+
+				#wt p
+				{	margin: 0 0 15px 0;
+					color: #777;
+					padding: 0;
+					font-size: 11px}
+
+		#bottom
+		{	height: 28px;
+			color: #FFF;
+			padding: 12px 0 0 16px;
+			font: 11px trebuchet ms, georgia, tahoma, sans-serif;
+			background: #0A0099 url(/_img/btbg.gif);
+			border: 1px solid #C1C1C1;
+			border-top-width: 0px;}
+
+/*************************************************/
+h1
+{	margin: 0;
+	padding: 0 0 10px 0;
+	font: 1.5em trebuchet ms, georgia, arial, sans-serif;
+	color: #060054}
+
+h2
+{	margin: 0;
+	padding: 10px 0 10px 0;
+	font: 1.2em trebuchet ms, georgia, arial, sans-serif;
+	color: #060054}
+
+p
+{	margin: 0;
+	padding: 0 0 10px 0;
+	font: 0.8em trebuchet ms, georgia, tahoma, sans-serif;
+	line-height: 150%;
+	color: #353D3C}
+
+	.handler
+	{	color: #659912}
+
+ul li
+{	font: 0.8em trebuchet ms, georgia, tahoma, sans-serif;}
+
+div.date
+{	font: 0.8em trebuchet ms, georgia, tahoma, sans-serif;
+	color: #939393}
+
+div.devider
+{	border-top: 1px solid #DFE0C8;
+	margin-bottom: 45px}
+
+div.sample
+{	font: 0.8em trebuchet ms, georgia, tahoma, sans-serif;
+	background: #C8D1FF;
+	border: 1px solid #607AFF;
+	overflow: hidden;
+	width: 99%;
+	padding: 0px}
+
+	div.sample span
+	{	display: block;
+		padding: 10px}
+
+div.htmlcode, div.csscode, div.jscode
+{	height: 200px;
+	width: 99%;
+	overflow: scroll}
+
+	div.htmlcode pre, div.csscode pre, div.jscode pre
+	{	margin: 0;
+		padding: 0;
+		font: 11px lucida console, courier new;
+		padding: 10px}
+
+	div.htmlcode
+	{	background: #D5EFF7;
+		border: 1px solid #59C4E2}
+
+	div.csscode
+	{	background: #F1F7D5;
+		border: 1px solid #C9E259}
+
+	div.jscode
+	{	background: #FFE8AF;
+		border: 1px solid #E2A359}
+
+.download
+{	font: 0.8em trebuchet ms, georgia, tahoma, sans-serif;
+	padding: 5px 0px 15px 0px;
+	border-top: 1px solid #DFE0C8;
+	margin: 10px 0}
+
+	.download a
+	{	display: block;
+		background: url(/_img/download.gif) no-repeat;
+		padding: 0 0 0 20px}
+
+.likebuttons
+{	margin: 0px 0px 0px 20px}
+
+
+a
+{	color: #639DEB}
+
+a:hover
+{	color: #09008E}
+
+a:visited
+{	color: #A8C0C7}
+
+a:visited:hover
+{	color: #09008E}
+
+a:active
+{	color: #E03083}

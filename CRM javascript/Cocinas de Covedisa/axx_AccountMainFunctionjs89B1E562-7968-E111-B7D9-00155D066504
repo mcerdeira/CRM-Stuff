@@ -1,0 +1,50 @@
+function tieneEmail(onChange){
+  var solicitar;
+  
+  if (!onChange && (Xrm.Page.ui.getFormType() == 1)){
+    solicitar = true;
+  }else{
+    solicitar = Xrm.Page.getAttribute("axx_tieneemail").getValue();
+  }
+  
+  if (solicitar){
+    Xrm.Page.getControl("emailaddress1").setDisabled(false);
+    Xrm.Page.getAttribute("emailaddress1").setRequiredLevel("required");
+  }else{
+    Xrm.Page.getControl("emailaddress1").setDisabled(true);
+    Xrm.Page.getAttribute("emailaddress1").setRequiredLevel("none");
+
+    if (onChange){
+      Xrm.Page.getAttribute("emailaddress1").setValue(null);
+      Xrm.Page.getAttribute("emailaddress1").setSubmitMode("always");
+    }
+  }
+}
+
+// Prefill a Lookup field with a default value 
+function prefillLookup(lookup, text, firstTabIndex){
+    var lookupAttribute = Xrm.Page.getAttribute(lookup);
+    var lookupControl = Xrm.Page.ui.controls.get(lookup);
+    var lookupElement = document.getElementById(lookup + "_ledit");
+    var isCreateForm = Xrm.Page.ui.getFormType() == 1;
+    // Only prefill if its a new record, and the lookup is empty
+    if (isCreateForm && lookupAttribute.getValue() == null) {
+        // Set focus to the Lookup Control
+        lookupControl.setFocus();
+        // Prefill the text into the Element (unsupported)
+        lookupElement.value = text;
+        // Fire onblur to resolve the text (unsupported)
+        lookupElement.fireEvent("onblur");
+        // Wait 500ms for the lookup to resolve, then click first tab
+        setTimeout(function () { clickFirstTab(firstTabIndex) }, 500);
+    }
+}
+// Clicks first tab, so that if the lookup is on another tab, the first tab will still be selected
+function clickFirstTab() {
+    // Unless specified, use tab 0 (the default first tab)
+    if (firstTabIndex == null) { firstTabIndex = 0; }
+    // Removes focus from the Lookup field
+    document.activeElement.blur();
+    // Click the first tab
+    document.getElementById("tab" + firstTabIndex + "Tab").fireEvent("onclick");
+}

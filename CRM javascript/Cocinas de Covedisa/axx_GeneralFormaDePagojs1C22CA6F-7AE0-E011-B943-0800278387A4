@@ -1,0 +1,12 @@
+function setFormaDePagoName()
+{
+forma = Xrm.Page.getAttribute("axx_formadepago").getText();
+medio = Xrm.Page.getAttribute("axx_mediodepago").getText();
+nombre = forma + " - " +medio;
+Xrm.Page.getAttribute("axx_name").setValue(nombre);
+}
+
+function defaultname()
+{
+if (Xrm.Page.getAttribute("axx_name").getValue()==null){Xrm.Page.getAttribute("axx_name").setValue("Temp")}
+}

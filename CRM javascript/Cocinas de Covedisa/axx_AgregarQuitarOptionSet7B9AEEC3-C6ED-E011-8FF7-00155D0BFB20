@@ -1,0 +1,97 @@
+function quitarOpciones(){
+//Pasar por parametro el nombre del campo y las opciones a quitar    	  
+  var field = arguments[0];
+  var optionsetControl = Xrm.Page.ui.controls.get(field);
+  var currentValue = Xrm.Page.getAttribute(field).getValue();
+
+  for (i = 1; i < arguments.length; i++){
+    if (arguments[i] != currentValue){      
+      optionsetControl.removeOption(arguments[i]);
+    }
+  }  
+  Xrm.Page.getAttribute(field).setValue(currentValue);  
+}
+
+function vaciarOpciones(picklistArr,field){
+	// crmForm.all.axx_cuotas[2].value		
+	var e = picklistArr.length;
+	var picklistObj = Xrm.Page.ui.controls.get(field);
+	var opt;
+    for (i = 1; i < e; i++){    	
+    	opt = picklistObj.getAttribute(field).getOption(i).text;       	
+    	picklistObj.removeOption(opt);
+    }
+}
+
+function dejarOpcionesArray(field, inArray){
+//Pasar por parametro el nombre del campo y las opciones a dejar en el orden que se desea que aparezcan.
+
+  var optionArr = new Array();
+  var optionsetControl = Xrm.Page.ui.controls.get(field);
+  var option;
+  var currentOption = optionsetControl.getAttribute(field).getSelectedOption();
+  var currentValue = Xrm.Page.getAttribute(field).getValue();
+ 
+ 
+//Save the options to retain in a temporal array  
+  for (i = 0; i < inArray.length; i++){
+    option = optionsetControl.getAttribute(field).getOption(inArray[i]);
+    optionArr.push(option);
+  }    
+    
+//Clear all options
+  optionsetControl.clearOptions();
+
+//Add the saved options 
+  var addCurrentOption = ( currentValue != null && !isNaN(currentValue) ) ? true : false;
+  
+  for (f = 0; f < optionArr.length; f++){
+    optionsetControl.addOption(optionArr[f]);
+    if (optionArr[f].value == currentValue){
+      addCurrentOption = false;
+    }
+  }
+  
+  if (addCurrentOption && currentOption){
+    optionsetControl.addOption(currentOption);
+  }
+  
+  Xrm.Page.getAttribute(field).setValue(currentValue);
+}
+
+
+function dejarOpciones(){
+//Pasar por parametro el nombre del campo y las opciones a dejar en el orden que se desea que aparezcan.
+
+  var field = arguments[0];
+  var optionArr = new Array();
+  var optionsetControl = Xrm.Page.ui.controls.get(field);
+  var option;
+  var currentOption = optionsetControl.getAttribute(field).getSelectedOption();
+  var currentValue = Xrm.Page.getAttribute(field).getValue();
+  
+//Save the options to retain in a temporal array  
+  for (i = 1; i < arguments.length; i++){
+    option = optionsetControl.getAttribute(field).getOption(arguments[i]);
+    optionArr.push(option);
+  }    
+    
+//Clear all options
+  optionsetControl.clearOptions();
+
+//Add the saved options 
+  var addCurrentOption = ( currentValue != null && !isNaN(currentValue) ) ? true : false;
+  
+  for (f = 0; f < optionArr.length; f++){
+    optionsetControl.addOption(optionArr[f]);
+    if (optionArr[f].value == currentValue){
+      addCurrentOption = false;
+    }
+  }
+  
+  if (addCurrentOption && currentOption){
+    optionsetControl.addOption(currentOption);
+  }
+  
+  Xrm.Page.getAttribute(field).setValue(currentValue);
+}

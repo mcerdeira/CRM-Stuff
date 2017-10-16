@@ -1,0 +1,47 @@
+function crearNameFormaPago(){
+  var medioDePago = Xrm.Page.getAttribute("axx_mediodepagoid").getValue();
+  var banco = Xrm.Page.getAttribute("axx_entidadbancariaid").getValue();
+  var tipo  = Xrm.Page.getAttribute("axx_formadepago").getText();
+  
+  nameMedioDePago = (medioDePago && medioDePago[0]) ? medioDePago[0].name : "";
+  nameBanco = (banco && banco[0]) ? banco[0].name : "Todos los Bancos";
+  nameTipo = (tipo != null) ? tipo : "";
+  
+  nombre = nameMedioDePago + " - (" + nameTipo + ") - " + nameBanco;
+  Xrm.Page.getAttribute("axx_name").setValue(nombre);
+}
+
+function todosLosBancos(){
+if (Xrm.Page.getAttribute("axx_todoslosmedios").getValue()==true)
+{
+ Xrm.Page.getAttribute("axx_entidadbancariaid").setRequiredLevel("none");
+ Xrm.Page.getControl("axx_entidadbancariaid").setDisabled(true);
+ Xrm.Page.getAttribute("axx_entidadbancariaid").setValue(null);
+ Xrm.Page.getAttribute("axx_entidadbancariaid").setSubmitMode("always");
+}
+else
+{
+ Xrm.Page.getAttribute("axx_entidadbancariaid").setRequiredLevel("required");
+ Xrm.Page.getControl("axx_entidadbancariaid").setDisabled(false);
+}
+}
+
+function habilitarErrorPago(){
+	var CodError = Xrm.Page.getAttribute("axx_paymentstarus").getValue();
+
+	if (CodError == 2 || CodError == 8)
+	{
+		Xrm.Page.getControl("axx_codigoerror").setVisible(true);
+	}else{
+		Xrm.Page.getControl("axx_codigoerror").setVisible(false);
+	}
+}
+
+function nombreHistorialPago(){
+	var Pedido = Xrm.Page.getAttribute("axx_pedido").getValue()[0].name;
+	var Fecha = new Date(Xrm.Page.getAttribute("axx_fecha").getValue());
+	var Estado = Xrm.Page.getAttribute("axx_paymentstarus").getText();
+	
+	var Nombre = Fecha.format("d") + " - " + Estado;
+	Xrm.Page.getAttribute("axx_name").setValue(Nombre);
+}

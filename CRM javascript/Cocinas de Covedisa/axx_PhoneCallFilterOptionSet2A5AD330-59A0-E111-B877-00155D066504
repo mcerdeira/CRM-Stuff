@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelatedOptionSets>
+  <Relations>
+    <axx_areaplusdireccion key="a">
+      <axx_grupoderesultadosdellamada key ="b">
+        <axx_categoria key="c">
+          <axx_subcategoria key="d" />
+        </axx_categoria>
+      </axx_grupoderesultadosdellamada>
+    </axx_areaplusdireccion>
+  </Relations>
+  <Filters>
+    <a0 id="0" oskey="a">
+      <a0bnull id="null" oskey="b">
+        <a0bnullc51 id="51" oskey="c" />
+        <a0bnullc54 id="54" oskey="c" />
+        <a0bnullc60 id="60" oskey="c" />
+        <a0bnullc170 id="170" oskey="c" />
+        <a0bnullc171 id="171" oskey="c" />
+        <a0bnullc172 id="172" oskey="c" />
+        <a0bnullc173 id="173" oskey="c" />
+        <a0bnullc174 id="174" oskey="c" />
+        <a0bnullc175 id="175" oskey="c" />
+        <a0bnullc176 id="176" oskey="c" />
+        <a0bnullc177 id="177" oskey="c" />
+        <a0bnullc178 id="178" oskey="c" />
+        <a0bnullc179 id="179" oskey="c" />
+        <a0bnullc180 id="180" oskey="c" />
+        <a0bnullc181 id="181" oskey="c" />
+        <a0bnullc182 id="182" oskey="c" />
+        <a0bnullc183 id="183" oskey="c" />
+      </a0bnull>
+    </a0>
+    <a1 id="1" oskey="a">
+      <a1b0 id="0" oskey="b">
+        <a1b0c9 id="9" oskey="c" />
+        <a1b0c44 id="44" oskey="c" />
+        <a1b0c45 id="45" oskey="c" />
+        <a1b0c55 id="55" oskey="c" />
+        <a1b0c56 id="56" oskey="c" />
+        <a1b0c60 id="60" oskey="c" />
+        <a1b0c114 id="114" oskey="c" />
+        <a1b0c115 id="115" oskey="c" />
+        <a1b0c116 id="116" oskey="c" />
+        <a1b0c117 id="117" oskey="c" />
+        <a1b0c118 id="118" oskey="c" />
+        <a1b0c119 id="119" oskey="c" />
+        <a1b0c100001 id="100001" oskey="c">
+          <a1b0c100001d128 id="128" oskey="d" />
+          <a1b0c100001d130 id="130" oskey="d" />
+          <a1b0c100001d132 id="132" oskey="d" />
+          <a1b0c100001d133 id="133" oskey="d" />
+          <a1b0c100001d134 id="134" oskey="d" />
+        </a1b0c100001>
+        <a1b0c100002 id="100002" oskey="c">
+          <a1b0c100002d137 id="137" oskey="d" />
+          <a1b0c100002d140 id="140" oskey="d" />
+          <a1b0c100002d142 id="142" oskey="d" />
+          <a1b0c100002d145 id="145" oskey="d" />
+          <a1b0c100002d148 id="148" oskey="d" />
+          <a1b0c100002d150 id="150" oskey="d" />
+          <a1b0c100002d151 id="151" oskey="d" />
+          <a1b0c100002d152 id="152" oskey="d" />
+        </a1b0c100002>
+      </a1b0>
+      <a1b1 id="1" oskey="b">
+        <a1b1c9 id="9" oskey="c" />
+        <a1b1c44 id="44" oskey="c" />
+        <a1b1c45 id="45" oskey="c" />
+        <a1b1c55 id="55" oskey="c" />
+        <a1b1c56 id="56" oskey="c" />
+        <a1b1c60 id="60" oskey="c" />
+        <a1b1c114 id="114" oskey="c" />
+        <a1b1c115 id="115" oskey="c" />
+        <a1b1c116 id="116" oskey="c" />
+        <a1b1c117 id="117" oskey="c" />
+        <a1b1c118 id="118" oskey="c" />
+        <a1b1c119 id="119" oskey="c" />
+        <a1b1c100001 id="100001" oskey="c">
+          <a1b1c100001d128 id="128" oskey="d" />
+          <a1b1c100001d130 id="130" oskey="d" />
+          <a1b1c100001d132 id="132" oskey="d" />
+          <a1b1c100001d133 id="133" oskey="d" />
+          <a1b1c100001d134 id="134" oskey="d" />
+        </a1b1c100001>
+        <a1b1c100002 id="100002" oskey="c">
+          <a1b1c100002d138 id="138" oskey="d" />
+          <a1b1c100002d139 id="139" oskey="d" />
+          <a1b1c100002d140 id="140" oskey="d" />
+          <a1b1c100002d142 id="142" oskey="d" />
+          <a1b1c100002d145 id="145" oskey="d" />
+          <a1b1c100002d146 id="146" oskey="d" />
+          <a1b1c100002d148 id="148" oskey="d" />
+          <a1b1c100002d149 id="149" oskey="d" />
+          <a1b1c100002d151 id="151" oskey="d" />
+          <a1b1c100002d152 id="152" oskey="d" />
+        </a1b1c100002>
+      </a1b1>
+      <a1b2 id="2" oskey="b">
+        <a1b2c9 id="9" oskey="c" />
+        <a1b2c44 id="44" oskey="c" />
+        <a1b2c45 id="45" oskey="c" />
+        <a1b2c55 id="55" oskey="c" />
+        <a1b2c56 id="56" oskey="c" />
+        <a1b2c114 id="114" oskey="c" />
+        <a1b2c115 id="115" oskey="c" />
+        <a1b2c116 id="116" oskey="c" />
+        <a1b2c118 id="118" oskey="c" />
+        <a1b2c119 id="119" oskey="c" />
+        <a1b2c120 id="120" oskey="c" />
+        <a1b2c121 id="121" oskey="c" />
+        <a1b2c122 id="122" oskey="c" />
+        <a1b2c100001 id="100001" oskey="c">
+          <a1b2c100001d128 id="128" oskey="d" />
+          <a1b2c100001d130 id="130" oskey="d" />
+          <a1b2c100001d132 id="132" oskey="d" />
+          <a1b2c100001d133 id="133" oskey="d" />
+          <a1b2c100001d134 id="134" oskey="d" />
+        </a1b2c100001>
+        <a1b2c100003 id="100003" oskey="c">
+          <a1b2c100003d153 id="153" oskey="d" />
+          <a1b2c100003d155 id="155" oskey="d" />
+          <a1b2c100003d157 id="157" oskey="d" />
+          <a1b2c100003d158 id="158" oskey="d" />
+          <a1b2c100003d161 id="161" oskey="d" />
+          <a1b2c100003d163 id="163" oskey="d" />
+          <a1b2c100003d165 id="165" oskey="d" />
+          <a1b2c100003d166 id="166" oskey="d" />
+          <a1b2c100003d167 id="167" oskey="d" />
+          <a1b2c100003d168 id="168" oskey="d" />
+          <a1b2c100003d169 id="169" oskey="d" />
+        </a1b2c100003>
+      </a1b2> 
+      <a1b3 id="3" oskey="b">
+        <a1b3c9 id="9" oskey="c" />
+        <a1b3c44 id="44" oskey="c" />
+        <a1b3c45 id="45" oskey="c" />
+        <a1b3c55 id="55" oskey="c" />
+        <a1b3c56 id="56" oskey="c" />
+        <a1b3c118 id="118" oskey="c" />
+        <a1b3c119 id="119" oskey="c" />
+        <a1b3c120 id="120" oskey="c" />
+        <a1b3c121 id="121" oskey="c" />
+        <a1b3c100001 id="100001" oskey="c">
+          <a1b3c100001d128 id="128" oskey="d" />
+          <a1b3c100001d130 id="130" oskey="d" />
+          <a1b3c100001d132 id="132" oskey="d" />
+          <a1b3c100001d134 id="134" oskey="d" />
+          <a1b3c100001d210 id="210" oskey="d" />
+        </a1b3c100001>
+        <a1b3c100003 id="100003" oskey="c">
+          <a1b3c100003d154 id="154" oskey="d" />
+          <a1b3c100003d155 id="155" oskey="d" />
+          <a1b3c100003d158 id="158" oskey="d" />
+          <a1b3c100003d160 id="160" oskey="d" />
+          <a1b3c100003d163 id="163" oskey="d" />
+          <a1b3c100003d164 id="164" oskey="d" />
+          <a1b3c100003d165 id="165" oskey="d" />
+          <a1b3c100003d167 id="167" oskey="d" />
+          <a1b3c100003d169 id="169" oskey="d" />
+        </a1b3c100003>
+      </a1b3>
+      <a1b4 id="4" oskey="b">
+        <a1b4c1 id="1" oskey="c" />
+        <a1b4c9 id="9" oskey="c" />
+        <a1b4c44 id="44" oskey="c" />
+        <a1b4c45 id="45" oskey="c" />
+        <a1b4c55 id="55" oskey="c" />
+        <a1b4c56 id="56" oskey="c" />
+        <a1b4c118 id="118" oskey="c" />
+        <a1b4c119 id="119" oskey="c" />
+        <a1b4c100001 id="100001" oskey="c">
+          <a1b4c100001d129 id="129" oskey="d" />
+          <a1b4c100001d136 id="136" oskey="d" />
+          <a1b4c100001d210 id="210" oskey="d" />
+        </a1b4c100001>
+        <a1b4c100004 id="100004" oskey="c">
+          <a1b4c100004d123 id="123" oskey="d" />
+          <a1b4c100004d124 id="124" oskey="d" />
+          <a1b4c100004d125 id="125" oskey="d" />
+          <a1b4c100004d126 id="126" oskey="d" />
+          <a1b4c100004d127 id="127" oskey="d" />
+        </a1b4c100004>
+      </a1b4>
+      <a1b5 id="5" oskey="b">
+        <a1b5c9 id="9" oskey="c" />
+        <a1b5c44 id="44" oskey="c" />
+        <a1b5c45 id="45" oskey="c" />
+        <a1b5c55 id="55" oskey="c" />
+        <a1b5c56 id="56" oskey="c" />
+        <a1b5c117 id="117" oskey="c" />
+        <a1b5c118 id="118" oskey="c" />
+        <a1b5c119 id="119" oskey="c" />
+        <a1b5c100001 id="100001" oskey="c">
+          <a1b5c100001d129 id="129" oskey="d" />
+          <a1b5c100001d131 id="131" oskey="d" />
+          <a1b5c100001d135 id="135" oskey="d" />
+        </a1b5c100001>
+        <a1b5c100002 id="100002" oskey="c">
+          <a1b5c100002d141 id="141" oskey="d" />
+          <a1b5c100002d143 id="143" oskey="d" />
+          <a1b5c100002d144 id="144" oskey="d" />
+          <a1b5c100002d147 id="147" oskey="d" />
+        </a1b5c100002>
+      </a1b5>
+    </a1>
+    <a2 id="2" oskey="a">
+      <a2bnull id="null" oskey="b" >
+        <a2bnullc184 id="184" oskey="c" />
+        <a2bnullc100005 id="100005" oskey="c">
+          <a2bnullc100005d185 id="185" oskey="d" />
+          <a2bnullc100005d186 id="186" oskey="d" />
+          <a2bnullc100005d187 id="187" oskey="d" />
+          <a2bnullc100005d188 id="188" oskey="d" />
+          <a2bnullc100005d189 id="189" oskey="d" />
+          <a2bnullc100005d190 id="190" oskey="d" />
+          <a2bnullc100005d191 id="191" oskey="d" />
+          <a2bnullc100005d192 id="192" oskey="d" />
+        </a2bnullc100005>
+        <a2bnullc100006 id="100006" oskey="c">
+          <a2bnullc100006d193 id="193" oskey="d" />
+          <a2bnullc100006d194 id="194" oskey="d" />
+          <a2bnullc100006d195 id="195" oskey="d" />
+        </a2bnullc100006>
+        <a2bnullc100007 id="100007" oskey="c">
+          <a2bnullc100007d196 id="196" oskey="d" />
+          <a2bnullc100007d197 id="197" oskey="d" />
+          <a2bnullc100007d198 id="198" oskey="d" />
+          <a2bnullc100007d199 id="199" oskey="d" />
+        </a2bnullc100007>
+      </a2bnull>
+    </a2>
+    <a3 id="3" oskey="a">
+      <a3bnull id="null" oskey="b">
+        <a3bnullc200 id="200" oskey="c" />
+        <a3bnullc201 id="201" oskey="c" />
+        <a3bnullc202 id="202" oskey="c" />
+        <a3bnullc203 id="203" oskey="c" />
+        <a3bnullc204 id="204" oskey="c" />
+        <a3bnullc205 id="205" oskey="c" />
+        <a3bnullc206 id="206" oskey="c" />
+        <a3bnullc207 id="207" oskey="c" />
+        <a3bnullc208 id="208" oskey="c" />
+        <a3bnullc209 id="209" oskey="c" />
+      </a3bnull>
+    </a3>
+  </Filters>
+</RelatedOptionSets>

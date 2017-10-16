@@ -1,0 +1,258 @@
+function callMerlinWS(entity, calle, numero, piso, depto, barrio, localidad, partido, provincia, cp, ExecutionObj){
+    // Llamar al webservice de Merlin
+    var SOAPXML = "<?xml version='1.0' encoding='ISO-8859-1'?>";
+    SOAPXML = SOAPXML + " <reqDireccion>";
+        SOAPXML = SOAPXML + " <xdireccion>";
+            SOAPXML = SOAPXML + " <calle>" + strMerlin(calle) + "</calle>";
+            SOAPXML = SOAPXML + " <numero>" + strMerlin(numero) + "</numero>";
+            SOAPXML = SOAPXML + " <piso>" + strMerlin(piso) + "</piso>";
+            SOAPXML = SOAPXML + " <depto>" + strMerlin(depto) + "</depto>";
+            SOAPXML = SOAPXML + " <barrio>" + strMerlin(barrio) + "</barrio>";
+            SOAPXML = SOAPXML + " <localidad>" + strMerlin(localidad) + "</localidad>";
+            SOAPXML = SOAPXML + " <partido>" + strMerlin(partido) + "</partido>";
+            SOAPXML = SOAPXML + " <provincia>" + strMerlin(provincia) +"</provincia>";
+            SOAPXML = SOAPXML + " <cp>" + strMerlin(cp) +"</cp>";
+            SOAPXML = SOAPXML + " <idmax></idmax>";
+        SOAPXML = SOAPXML + " </xdireccion>";
+    SOAPXML = SOAPXML + " </reqDireccion>";
+    
+    // alert(SOAPXML );
+
+    try {
+        var XMLHTTP = new ActiveXObject("MSXML2.XMLHTTP");
+    }catch(error) {
+        alert(error);
+        Xrm.Page.getAttribute("axx_normalizado_merlin").setValue(strCRM("No")); 
+        return false;
+    }    
+    XMLHTTP.open("POST", "http://cov_merlin:6670/xmlNormalizer", false);
+    XMLHTTP.setRequestHeader("content-type", "text/xml; charset=ISO-8859-1");
+    XMLHTTP.setRequestHeader("content-length", SOAPXML.length);
+
+    try {
+        XMLHTTP.send(SOAPXML);
+    }catch(error) {
+        Xrm.Page.getAttribute("axx_normalizado_merlin").setValue(strCRM("No"));
+        return false;
+    }    
+    // var xml = XMLHTTP.responseText;
+    //alert(XMLHTTP.responseBody);
+    var xml = BinaryToString(XMLHTTP.responseBody);
+
+     // alert(xml);
+
+    var doc = new ActiveXObject("MSXML2.DOMDocument");
+    // Intento cargar el XML
+    doc.loadXML(xml);
+    if (doc.parseError.reason != ''){
+        // Houston, we have a problem
+        alert("Error Parseo XML: " + doc.parseError.reason);
+        Xrm.Page.getAttribute("axx_normalizado_merlin").setValue(strCRM("No"));
+        return false;
+    }
+    var estado = doc.selectSingleNode("//estado").text;
+    var Resp;
+    switch (estado){
+        case "CO": // Exitosa
+            var calle = doc.selectNodes("//calle").item(0).text;
+            var numero = doc.selectNodes("//numero").item(0).text;
+            var piso = doc.selectNodes("//piso").item(0).text;
+            var depto = doc.selectNodes("//depto").item(0).text;
+            var barrio = doc.selectNodes("//barrio").item(0).text;
+            var localidad = doc.selectNodes("//localidad").item(0).text;
+            var partido = doc.selectNodes("//partido").item(0).text;
+            var provincia = doc.selectNodes("//provincia").item(0).text;
+            var cp = doc.selectNodes("//cp").item(0).text;
+           var x = doc.selectNodes("//x").item(0).text;
+           var y = doc.selectNodes("//y").item(0).text;
+            setFields(entity, calle, numero, piso, depto, barrio, localidad,partido, provincia, cp, "Si", x, y);
+            break;
+        case "NE": // No encontrada
+           Resp = confirm("No Encontrada, Motivo: " + getMotivo(doc.selectSingleNode("//motivo").text) + "\n\n¿Guardar los cambios de todas formas?");
+           if(!Resp)
+             ExecutionObj.getEventArgs().preventDefault();
+           else if(Xrm.Page.getAttribute("axx_addresscomments").getValue() == null)
+           {
+            ExecutionObj.getEventArgs().preventDefault();
+            alert('Se debe completar el campo \'' + Xrm.Page.getControl("axx_addresscomments").getLabel() + '\' dado que Merlin no pudo normalizar la dirección.');
+           }
+           break;
+        case "DU": // Dudas
+           var dudas = doc.selectSingleNode("//cantdudas").text;
+           var obj = new Array();
+           var i = 0;
+           var line = "";
+           for (i=0;i<dudas;i++){
+               obj[i] = new Array(doc.selectNodes("//calle").item(i+1).text,
+                                  doc.selectNodes("//numero").item(i+1).text, 
+                                  doc.selectNodes("//piso").item(i+1).text,
+                                  doc.selectNodes("//depto").item(i+1).text,
+                                  doc.selectNodes("//barrio").item(i+1).text,
+                                  doc.selectNodes("//localidad").item(i+1).text,
+                                  doc.selectNodes("//partido").item(i+1).text,
+                                  doc.selectNodes("//provincia").item(i+1).text,
+                                  doc.selectNodes("//cp").item(i+1).text)
+           }
+           // Llamar ventana de dudas
+           //var orgURL = Xrm.Page.context.getServerUrl();           
+           var orgURL = window.location.protocol + "//" + window.location.hostname  + ":" + window.location.port + "/" + Xrm.Page.context.getOrgUniqueName();
+           var retVal = window.showModalDialog(orgURL + "/WebResources/axx_merlin_modal", obj, '');
+           // var retVal = window.showModalDialog("http://covcrm:5555/CovedisaTest/WebResources/axx_merlin_modal", obj, '');
+           if(retVal == -1){
+               // Boton "cancelar"
+               Xrm.Page.getAttribute("axx_normalizado_merlin").setValue(strCRM("No"));
+               ExecutionObj.getEventArgs().preventDefault();
+               return false;
+           }
+           // Llenar campos con opción elegida
+           var calle = doc.selectNodes("//calle").item(retVal+1).text;
+           var numero = doc.selectNodes("//numero").item(retVal+1).text;
+           var piso = doc.selectNodes("//piso").item(retVal+1).text;
+           var depto = doc.selectNodes("//depto").item(retVal+1).text;
+           var barrio = doc.selectNodes("//barrio").item(retVal+1).text;
+           var localidad = doc.selectNodes("//localidad").item(retVal+1).text;
+           var partido = doc.selectNodes("//partido").item(retVal+1).text;
+           var provincia = doc.selectNodes("//provincia").item(retVal+1).text;
+           var cp = doc.selectNodes("//cp").item(retVal+1).text;
+           var x = doc.selectNodes("//x").item(retVal+1).text;
+           var y = doc.selectNodes("//y").item(retVal+1).text;
+           setFields(entity, calle, numero, piso, depto, barrio, localidad,partido, provincia, cp, "Si", x, y);
+           break;
+        default:
+           alert("Estado " + getEstado(estado));
+    }
+}
+
+function merlinNormalize(ExecutionObj, entity){
+    if(entity == 'account' || entity == 'contact'){
+        var calle = Xrm.Page.getAttribute("address1_line1").getValue();
+        var numero = Xrm.Page.getAttribute("axx_numero").getValue();
+        var piso = Xrm.Page.getAttribute("axx_piso").getValue();
+        var depto = Xrm.Page.getAttribute("axx_departamento").getValue();
+        var barrio = Xrm.Page.getAttribute("axx_barrio").getValue();
+        var localidad = Xrm.Page.getAttribute("axx_localidad").getValue();
+        var partido = Xrm.Page.getAttribute("axx_jurisdiccion").getValue();
+        var provincia = Xrm.Page.getAttribute("address1_stateorprovince").getValue();
+        var cp = Xrm.Page.getAttribute("address1_postalcode").getValue();
+    }else if(entity == 'customeraddres'){
+        var calle = Xrm.Page.getAttribute("line1").getValue();
+        var numero = Xrm.Page.getAttribute("axx_numero").getValue();
+        var piso = Xrm.Page.getAttribute("axx_piso").getValue();
+        var depto = Xrm.Page.getAttribute("axx_departamento").getValue();
+        var barrio = Xrm.Page.getAttribute("axx_barrio").getValue();
+        var localidad = Xrm.Page.getAttribute("axx_localidad").getValue();
+        var partido = Xrm.Page.getAttribute("axx_jurisdiccion").getValue();
+        var provincia = Xrm.Page.getAttribute("stateorprovince").getValue();
+        var cp = Xrm.Page.getAttribute("postalcode").getValue();
+    }
+    callMerlinWS(entity, calle, numero, piso, depto, barrio, localidad, partido, provincia, cp, ExecutionObj);
+}
+
+function setFields(entity, calle, numero, piso, depto, barrio, localidad, partido, provincia, cp, normalizado, x, y){
+    if(entity == 'account' || entity == 'contact'){
+        Xrm.Page.getAttribute("address1_line1").setValue(strCRM(calle));
+        Xrm.Page.getAttribute("axx_numero").setValue(strCRM(numero));
+        Xrm.Page.getAttribute("axx_piso").setValue(strCRM(piso));
+        Xrm.Page.getAttribute("axx_departamento").setValue(strCRM(depto));
+        Xrm.Page.getAttribute("axx_barrio").setValue(strCRM(barrio));
+        Xrm.Page.getAttribute("axx_localidad").setValue(strCRM(localidad));
+        Xrm.Page.getAttribute("axx_jurisdiccion").setValue(strCRM(partido));
+        Xrm.Page.getAttribute("address1_stateorprovince").setValue(strCRM(provincia));
+        Xrm.Page.getAttribute("address1_postalcode").setValue(strCRM(cp));
+        Xrm.Page.getAttribute("axx_normalizado_merlin").setValue(strCRM(normalizado));
+        Xrm.Page.getAttribute("address1_longitude").setValue(parseFloat(x));
+        Xrm.Page.getAttribute("address1_latitude").setValue(parseFloat(y));
+    }else if(entity == 'customeraddres'){
+        Xrm.Page.getAttribute("line1").setValue(strCRM(calle));
+        Xrm.Page.getAttribute("axx_numero").setValue(strCRM(numero));
+        Xrm.Page.getAttribute("axx_piso").setValue(strCRM(piso));
+        Xrm.Page.getAttribute("axx_departamento").setValue(strCRM(depto));
+        Xrm.Page.getAttribute("axx_barrio").setValue(strCRM(barrio));
+        Xrm.Page.getAttribute("axx_localidad").setValue(strCRM(localidad));
+        Xrm.Page.getAttribute("axx_jurisdiccion").setValue(strCRM(partido));
+        Xrm.Page.getAttribute("stateorprovince").setValue(strCRM(provincia));
+        Xrm.Page.getAttribute("postalcode").setValue(strCRM(cp));
+        Xrm.Page.getAttribute("axx_normalizado_merlin").setValue(strCRM(normalizado));
+        Xrm.Page.getAttribute("longitude").setValue(parseFloat(x));
+        Xrm.Page.getAttribute("latitude").setValue(parseFloat(y));
+    }
+}
+
+function strCRM(str){
+   if(str == null){
+       str = "";
+   }
+   return str.replace("null","-").replace("NULL","-")
+}
+
+function strMerlin(str){
+   if(str == null){
+       str = "";
+   }
+   str = str.replace("null","").replace("NULL","");
+   return str
+}
+
+function getMotivo(motivo){
+    switch (motivo){
+        case "LI":
+            return "Localidad Inválida";
+        case "CI":
+            return "Calle Inválida" ;
+        case "AI":
+            return "Altura Inválida";
+        case "RA":
+            return "Rechazado por Auditoría";
+        case "DS":
+            return "Duda estándar"
+        case "DA":
+            return "Duda por altura"
+        default:
+            return motivo;
+    }
+}
+
+function getEstado(estado){
+    switch (estado){
+        case "CO":
+            return "Corregido";
+        case "NE":
+            return "No encontrado" ;
+        case "DU":
+            return "Dudoso";
+        case "SD":
+            return "Sin datos";
+        case "NP":
+            return "No parseado";
+        default:
+            return estado;
+    }
+}
+
+/*
+function bts(bin){
+// WorkAround para tomar la respuesta binaria...
+var stream = new ActiveXObject("ADODB.Stream");
+                        stream.Type = 1; // adTypeBinary
+                        stream.Open ();
+                        stream.Write (bin);
+                        stream.Position = 0;
+                        stream.Type = 2; // adTypeText;
+                        stream.CharSet = "iso-8859-1";
+                        var sOut= stream.ReadText (stream.Size);
+    return sOut;
+
+}
+*/
+
+function BinaryToString(Bin){
+ var a = new VBArray(Bin);
+ var b = a.toArray();
+ var Idx;
+ var Ret = '';
+
+ for (Idx = 0; Idx < b.length; Idx++){
+     Ret += String.fromCharCode(b[Idx]);
+ }
+ return Ret;
+}

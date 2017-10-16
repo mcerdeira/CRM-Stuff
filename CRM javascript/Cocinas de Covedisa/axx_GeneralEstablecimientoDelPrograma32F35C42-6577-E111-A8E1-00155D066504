@@ -1,0 +1,22 @@
+function FormOnLoad()
+{
+ Xrm.Page.getAttribute("axx_name").setSubmitMode("always");
+ SetFinishDate('axx_valido_hasta','axx_fechadebaja');
+}
+
+function GenerateName()
+{
+ var Cuenta = '';
+ var Programa = '';
+ var Name;
+
+ if(Xrm.Page.getAttribute('axx_cuentaid').getValue() != null)
+  Cuenta = (Xrm.Page.getAttribute('axx_cuentaid').getValue())[0].name;
+ 
+ if(Xrm.Page.getAttribute('axx_programaid').getValue() != null)
+  Programa = (Xrm.Page.getAttribute('axx_programaid').getValue())[0].name;
+ 
+ Name = Cuenta + ((Cuenta != '' && Programa != '')?' - ':'') + Programa;
+ 
+ Xrm.Page.getAttribute('axx_name').setValue(Name);
+}

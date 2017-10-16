@@ -1,0 +1,198 @@
+//LookupPreviewScript.js
+///<reference path="XrmPage-vsdoc.js"/>
+var XrmPage;
+var popWindow;
+var _VerticalLayout = "V";
+var _HorizontalLayout = "H";
+var _ZLayout = "Z";
+var _NLayout = "N";
+var _ZDLayout= "ZD";
+
+function LoadLookPreviewDelayed(webResourceId, lookupAttributeId, columnList, layout)
+{
+    myFn = function(){LoadLookPreview(webResourceId, lookupAttributeId, columnList, layout);}
+    setTimeout(myFn, 1000);
+    Xrm.Page.getAttribute(lookupAttributeId.toLowerCase()).addOnChange(myFn);
+}
+
+function FormHTMLTable(divTag, controlSet, layout)
+{
+    var str = "";
+    if(layout == _VerticalLayout)
+    {
+        str = "<table><tbody>";
+        for(var k=0; k < controlSet.length; k++){
+        str += "<tr>";
+        str += "<td class='headerCss'>" + controlSet[k].attributeDisplayName + "</td>";
+        str += "<td>" + controlSet[k].attributeValue + "</td>";
+        str += "</tr>";
+        }
+        str += "</tbody></table>";                              
+    }
+    else if(layout == _ZLayout)
+    {
+        str = '<table>';
+        str += '<tbody>';
+        for (var j = 0; j < controlSet.length; j++) {
+            var index = j + 1;
+            str += "<tr>"
+            str += "<td class='headerCss'>" + controlSet[j].attributeDisplayName + "</td>";
+            str += "<td>" + controlSet[j].attributeValue + "</td>";
+            str += "<td class='seperator'></td>";
+            if(index < controlSet.length)
+            {
+                str += "<td class='headerCss'>" + controlSet[index].attributeDisplayName + "</td>";
+                str += "<td>" + controlSet[index].attributeValue + "</td>";
+            }
+            str += "</tr>"
+            j++;
+        }
+        str += '</tbody>'
+        str += '</table>';
+    }
+    else if(layout == _NLayout)
+    {
+        str = '<table>';
+        str += '<tbody>';
+        var half = Math.round(controlSet.length / 2)
+        for (var j = 0; j < controlSet.length; j++) {
+            var index = j + half;
+            if (j < half) {
+                str += "<tr>"
+                str += "<td class='headerCss'>" + controlSet[j].attributeDisplayName + "</td>";
+                str += "<td>" + controlSet[j].attributeValue + "</td>";
+                str += "<td class='seperator'></td>";
+                if (index < controlSet.length) {
+                    str += "<td class='headerCss'>" + controlSet[index].attributeDisplayName + "</td>";
+                    str += "<td>" + controlSet[index].attributeValue + "</td>";
+                }
+                str += "</tr>"
+            }
+        }
+        str += '</tbody>'
+        str += '</table>';
+    }
+    else if(layout == _ZDLayout)
+    {
+        str = "<table style='height=1px;' >";
+        str += '<tbody>';
+        for (var j = 0; j < controlSet.length; j++) {
+            var index = j + 1;
+            str += "<tr>";
+
+            if(controlSet[j].attributeDisplayName.search(/sec_/i) == 0){
+              str += "<td class='headerCss' colspan='5' style='font-weight=bold; border-bottom-width:2px;'>" + controlSet[j].attributeDisplayName.replace(/sec_/i,"") + "</td>";
+            
+            }else{
+              if( index >= controlSet.length || controlSet[index].attributeDisplayName != controlSet[j].attributeDisplayName){
+                str += "<td class='headerCss' style='width=22%;'>" + controlSet[j].attributeDisplayName + "</td>";
+                str += "<td style='width=27%;'>" + controlSet[j].attributeValue + "</td>";
+
+                str += "<td class='seperator' style='width=1px; padding-left=1px;padding-right=1px;background-color:rgb(239,242,246);'></td>";
+                //str += "<td class='seperator' style='width=1px; padding-left=1px;padding-right=1px;background-color:rgb(239,242,246);" + 
+                //       "border-bottom-width:2px; border-top-width:2px;border-top-color:rgb(239,242,246);border-bottom-color:rgb(239,242,246);'></td>";                       
+                if(index < controlSet.length)
+                {
+                    str += "<td class='headerCss' style='width=22%;'>" + controlSet[index].attributeDisplayName + "</td>";
+                    str += "<td style='width=27%;'>" + controlSet[index].attributeValue + "</td>";
+                }else{
+                    str += "<td colspan='2'></td>";
+                }
+              }else{
+                str += "<td class='headerCss' style='width=22%;'>" + controlSet[j].attributeDisplayName + "</td>";
+                str += "<td colspan='4'>" + controlSet[j].attributeValue + "</td>";           
+              }
+
+              str += "</tr>"
+              j++;
+            }
+        }
+        str += '</tbody>'
+        str += '</table>';
+    }
+    else 
+    {
+        str = "<table><thead><tr>";
+        for(var k=0; k < controlSet.length; k++){
+        str += "<th>" + controlSet[k].attributeDisplayName + "</th>";
+        }
+        str += "</tr></thead><tbody><tr>";
+        for (var i = 0; i < controlSet.length; i++){
+        str += "<td>" + controlSet[i].attributeValue + "</td>";
+        }
+        str += "</tr></tbody></table>";
+     }
+     divTag.innerHTML = str;
+     //divTag.style.display="";
+     $(divTag).slideDown(300);
+}
+
+function LoadLookPreview(webResourceId, lookupAttributeId, columnList, layout)
+{
+   var divTag;
+   var webResource = Xrm.Page.getControl(webResourceId);
+   var columnSet = new Array();
+   var columnHeaders = new Array();
+   var controlSet = new Array();
+
+   successCallBack =  function (attributeCollection) {
+       for(var k=0; k < controlSet.length; k++)
+       {
+          for (var i = 0; i < attributeCollection.length; i++) 
+          {
+              if(attributeCollection[i].attributeName == controlSet[k].attributeLogicalName)
+              {
+                   controlSet[k].attributeValue = attributeCollection[i].attributeValue;
+                   break;
+              }
+          }
+       }
+
+       FormHTMLTable(divTag, controlSet, layout);
+   };
+
+        errorCallBack =  function (error) {
+             divTag.innerHTML = "<span class='error'>" + error.message + "</span>";
+             $(divTag).slideDown(500);
+         };
+
+   if(webResource == null)
+   {
+       alert('No WebResource found with Id = ' + webResourceId);
+   }
+   else
+   {
+        divTag = document.getElementById(webResourceId).contentWindow.document.getElementById('lookupDIV');
+        if(divTag != null)
+        {
+            divTag.display = "none";
+            var columns = columnList.split('|');
+            for(var i = 0 ; i < columns.length; i++)
+            {
+                var s = columns[i].split('#');
+                var _control = new Object();
+                _control.attributeDisplayName = s[0];
+                _control.attributeLogicalName = s[1].toLowerCase().replace(/^\s+|\s+$/g, '')
+                _control.attributeValue = '';
+                controlSet.push(_control);
+
+                columnSet.push(s[1].toLowerCase().replace(/^\s+|\s+$/g, ''));
+            }
+
+            if(Xrm.Page.getAttribute(lookupAttributeId.toLowerCase()) != null && Xrm.Page.getAttribute(lookupAttributeId.toLowerCase()).getValue() != null)
+            {
+                var id = Xrm.Page.getAttribute(lookupAttributeId).getValue()[0].id;
+                var entityName = Xrm.Page.getAttribute(lookupAttributeId).getValue()[0].entityType;
+                SDK.RetrieveData.RetrieveRequestAsync(entityName, id, columnSet, successCallBack, errorCallBack);
+            }
+            else
+            {
+                FormHTMLTable(divTag, controlSet, layout);
+            }
+        }
+        else
+        {
+            alert("Error in Loading Web Resource (DIV is NULL)")
+        }
+   }
+}

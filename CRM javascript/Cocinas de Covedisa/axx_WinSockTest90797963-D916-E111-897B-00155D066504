@@ -1,0 +1,215 @@
+function FormOnLoadWSck()
+{
+ //var Ev;
+
+ //Ev = 'function WSock::DataArrival(bytesTotal){DataArrival(bytesTotal);}';
+
+ //WSockResponse = '';
+ WSock = new ActiveXObject('MSWinSock.WinSock');
+ //eval(Ev);
+ WSock.Protocol = 1; //UDP
+ WSock.RemoteHost = '127.0.0.1';
+ WSock.RemotePort = 8544;
+}
+
+function TestWSck()
+{
+ var Cmd;
+ var WSockResponse = '';
+ var StartTime;
+ var TimeOutMS = 5000; //5000 milisegundos.
+ var TimeOutFlg = false;
+ var GetDataObj = new ActiveXObject('WSockGetData.GetData');
+ 
+ Cmd = 'cmd=7272&nombre=dnis&linea=0&';
+
+ WSock.SendData(Cmd);
+ 
+ if(WSock.BytesReceived != 0)
+   WSockResponse = GetDataObj.GetData(WSock);
+ 
+ StartTime = new Date().getTime();
+ 
+ while (WSockResponse.substr(0,8) != 'cmd=7273')
+ {
+  if((new Date().getTime() - StartTime) >= TimeOutMS)
+  {
+    TimeOutFlg = true;
+    break;
+  }
+ 
+  if(WSock.BytesReceived != 0)
+    WSockResponse = GetDataObj.GetData(WSock);
+ }
+ 
+ if(!TimeOutFlg)
+    alert('Respuesta: ' + WSockResponse);
+ else
+    alert('TimeOut');
+
+ GetDataObj = null
+}
+
+/*
+function DataArrival(bytesTotal)
+{
+ var GetDataObj = new ActiveXObject('WSockGetData.GetData');
+ 
+ WSockResponse = GetDataObj.GetData(WSock);
+ 
+ GetDataObj = null;
+}
+*/
+
+function CalcMinutes()
+{
+ var SchEnd;
+ var NowDate;
+ var Diff;
+ 
+ SchEnd = Xrm.Page.getAttribute('scheduledend').getValue();
+ NowDate = new Date();
+ 
+ Diff = SchEnd.valueOf() - NowDate.valueOf();
+ 
+ Diff = Math.ceil(Diff/60000);
+ 
+ alert(Diff);
+}
+
+function VerQueOnda()
+{
+ var eId;
+ var eTypeName;
+ var Ctrl;
+ var organizationName;
+ var serverURL;
+ var odataSelect;
+ var Result;
+ var Ret;
+
+ Ctrl = Xrm.Page.getAttribute('to');
+ 
+ if(Ctrl.getValue() != null)
+ {
+  eId = (Ctrl.getValue()[0].id).replace('{','').replace('}','');
+  eTypeName = Ctrl.getValue()[0].typename;
+  eTypeName = eTypeName.charAt(0).toUpperCase() + eTypeName.slice(1);
+
+  if(eTypeName == 'Contact' || eTypeName == 'Account')
+  {
+   organizationName = Xrm.Page.context.getOrgUniqueName();
+   serverURL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/" + organizationName;
+   
+   odataSelect = serverURL + "/xrmservices/2011/OrganizationData.svc/" + eTypeName + "Set?";
+   odataSelect += "$select=" + ((eTypeName == 'Contact') ? "new_ID" : "AccountNumber") + '&';
+   odataSelect += "$filter=" + eTypeName + "Id eq guid'" + eId + "'";
+
+   $.ajax({
+           type: "GET",
+           contentType: "application/json; charset=utf-8",
+           datatype: "json",
+           url: odataSelect,
+           beforeSend: function (XMLHttpRequest) { XMLHttpRequest.setRequestHeader("Accept", "application/json"); },
+           success: function (data, textStatus, XmlHttpRequest)
+                    {
+                     if(data.d.results.length != 0)
+                     {
+                      Result = data.d.results[0];
+                      Ret = ((eTypeName == 'Contact') ? Result.new_ID : Result.AccountNumber);
+                      OndaVerde(Ret);
+                     }
+                    },
+       
+           error: function (XmlHttpRequest, textStatus, errorThrown) {}
+          }); 
+  }
+ }
+}
+
+function OndaVerde(Id)
+{
+ alert(Id);
+}
+
+function GetPickList()
+{
+ alert(Xrm.Page.getAttribute('axx_categoria').getValue());
+}
+
+function TestQS()
+{
+ var qs;
+ 
+ qs = window.location.href;
+ 
+ prompt('QueryString:', qs);
+}
+
+function GetURLForMitrolUpdate()
+{
+ var QSParams = new Array();
+ var QSClearParams = new Array();
+ var QS = new Array();
+ var Ret;
+ var IdxQS;
+ var IdxQSParams;
+ var ParamCount;
+ var Params;
+ var ClearParams;
+
+ Ret = '';
+ ParamCount = 0;
+
+ Params = 'id,axx_campana,axx_campananame,axx_listademarketing,axx_listademarketingname,directioncode,phonenumber,partyid,partyname,partytype';
+ ClearParams = 'id';
+
+ QSParams = Params.split(',');
+ QSClearParams = ClearParams.split(',');
+ QS = (window.location.search.substring(1)).split('&');
+
+ for(IdxQSParams in QSParams)
+ {
+  for(IdxQS in QS)
+  {
+   if(QSParams[IdxQSParams] == QS[IdxQS].substr(0, QSParams[IdxQSParams].length))
+   {
+    ParamCount++;
+
+    if(SearchInArray(QSClearParams, QSParams[IdxQSParams]) != -1)
+      Ret += '&' + QSParams[IdxQSParams] + '=';
+    else
+      Ret += '&' + QS[IdxQS];
+
+    break;
+   }
+  }
+ }
+ 
+ if(ParamCount != QSParams.length)
+   Ret = '';
+
+ return Ret;
+}
+
+function SearchInArray(Arr, Data)
+{
+ var Ret = -1;
+ var Idx;
+
+ for(Idx in Arr)
+ {
+  if(Arr[Idx] == Data)
+  {
+   Ret = Idx;
+   break;
+  }
+ }
+
+ return Ret;
+}
+
+function IsNewRecord()
+{
+ alert(Xrm.Page.ui.getFormType());
+}

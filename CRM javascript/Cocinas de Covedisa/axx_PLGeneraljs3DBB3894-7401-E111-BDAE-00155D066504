@@ -1,0 +1,6 @@
+function nameOnSave()
+{
+ var name = Xrm.Page.getAttribute("axx_campana").getValue()[0].name + "(P&L)";
+ Xrm.Page.getAttribute("axx_name").setValue(name);
+ Xrm.Page.getAttribute("axx_name").setSubmitMode("always");
+}

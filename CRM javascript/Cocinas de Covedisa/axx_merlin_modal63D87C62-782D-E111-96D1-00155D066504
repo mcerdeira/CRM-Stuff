@@ -1,0 +1,102 @@
+<HTML><HEAD><TITLE>Seleccione direccion</TITLE>
+<META charset=utf-8></HEAD>
+<BODY><SELECT id=combo onchange=fillLabels(); name=combo></SELECT> 
+<P><LABEL id=lbl0></LABEL><BR></P>
+<P><LABEL id=lbl1></LABEL><BR></P>
+<P><LABEL id=lbl2></LABEL><BR></P>
+<P><LABEL id=lbl3></LABEL><BR></P>
+<P><LABEL id=lbl4></LABEL><BR></P>
+<P><LABEL id=lbl5></LABEL><BR></P>
+<P><LABEL id=lbl6></LABEL><BR></P>
+<P><LABEL id=lbl7></LABEL><BR></P>
+<P><LABEL id=lbl8></LABEL><BR></P><BR><BR><BR>
+<DIV align=right><BUTTON onclick=eventAccept()>Aceptar</BUTTON><BUTTON onclick=eventCancel()>Cancelar</BUTTON> </DIV><LINK rel="SHORTCUT ICON" href="/favicon.ico"><LINK rel=stylesheet type=text/css href="/CovedisaTest/_common/styles/fonts.css.aspx?lcid=1033&amp;ver=-900509389"><LINK rel=stylesheet type=text/css href="/CovedisaTest/_common/styles/global.css.aspx?lcid=1033&amp;ver=-900509389"><LINK rel=stylesheet type=text/css href="/CovedisaTest/_common/styles/theme.css.aspx?lcid=1033&amp;theme=Outlook14Silver&amp;ver=-900509389"><LINK rel=stylesheet type=text/css href="/CovedisaTest/_common/styles/main.css.aspx?lcid=1033&amp;ver=-900509389"><LINK rel=stylesheet type=text/css href="/CovedisaTest/_forms/controls/controls.css.aspx?lcid=1033&amp;ver=-900509389"><LINK rel=stylesheet type=text/css href="/_static/css/1033/cui.css?ver=-900509389"><LINK rel=stylesheet type=text/css href="/CovedisaTest/_controls/AppMessageBar/appmessagebar.css.aspx?lcid=1033&amp;ver=-900509389"><LINK rel=stylesheet type=text/css href="/CovedisaTest/appnav/appnavbar.css.aspx?lcid=1033&amp;ver=-900509389">
+<SCRIPT type=text/javascript>
+var obj = window.dialogArguments;
+var i = 0;
+window.dialogHeight='200px';
+window.dialogWidth= '500px';
+
+var combo_item = false;
+window.user_cancelled = false;
+
+for (i=0;i<=obj.length-1;i++){
+    if(obj[i][0] != undefined && obj[i][0] != ''){
+        addCombo(obj[i][0] + " - " + obj[i][5] + " " + obj[i][8]); // calle, localidad, cp
+        combo_item = true;
+    }
+}
+
+if(combo_item){
+    fillLabels(); // Lleno los labels con el combo que esté como default
+}
+
+function addCombo(valor){
+    var combo = document.getElementById("combo");
+    var option = document.createElement("option");
+    option.text = valor;
+    option.value = valor;
+    try {
+        combo.add(option, null); //Standard
+    }catch(error) {
+        combo.add(option); // IE only
+    }
+}
+
+function eventCancel(){
+    window.user_cancelled = true;
+    window.close();
+}
+
+function eventAccept(){
+    window.user_cancelled = false;
+    window.close();
+}
+
+function strCRM(str){
+   return str.replace("null","-").replace("NULL","-")
+}
+
+function fillLabels(){
+     var combo= document.getElementById("combo");
+     var lbl0 = document.getElementById("lbl0");
+     var lbl1 = document.getElementById("lbl1");
+     var lbl2 = document.getElementById("lbl2");
+     var lbl3 = document.getElementById("lbl3");
+     var lbl4 = document.getElementById("lbl4");
+     var lbl5 = document.getElementById("lbl5");
+     var lbl6 = document.getElementById("lbl6");
+     var lbl7 = document.getElementById("lbl7");
+     var lbl8 = document.getElementById("lbl8");
+     var ind = combo.selectedIndex;
+     var obj = window.dialogArguments;
+     // Llenar labels
+     lbl0.innerHTML = "Calle: " + strCRM(obj[ind][0]);
+     lbl1.innerHTML = "Numero: " + strCRM(obj[ind][1]);
+     lbl2.innerHTML = "Piso: " + strCRM(obj[ind][2]);
+     lbl3.innerHTML = "Departamento: " + strCRM(obj[ind][3]);
+     lbl4.innerHTML = "Barrio: " + strCRM(obj[ind][4]);
+     lbl5.innerHTML = "Localidad: " + strCRM(obj[ind][5]);
+     lbl6.innerHTML = "Partido: " + strCRM(obj[ind][6]);
+     lbl7.innerHTML = "Provincia: " + strCRM(obj[ind][7]);
+     lbl8.innerHTML = "C.P.: " + strCRM(obj[ind][8]);
+}
+
+</SCRIPT>
+
+<SCRIPT type=text/javascript>
+function closedWin() {    
+    var combo= document.getElementById("combo");
+    if(window.user_cancelled){
+        window.returnValue = -1;
+    }else{
+        window.returnValue = combo.selectedIndex; // Retorno el indice del array de direcciones
+    }
+    //window.returnValue = combo.value;
+ }
+ if(window.addEventListener) {
+     window.addEventListener("close", closedWin, false);
+ }
+window.onunload = closedWin;
+</SCRIPT>
+</BODY></HTML>

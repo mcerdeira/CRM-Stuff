@@ -1,0 +1,3 @@
+function obtenerXML(){
+     alert(Xrm.Page.data.entity.getDataXml()); 
+}

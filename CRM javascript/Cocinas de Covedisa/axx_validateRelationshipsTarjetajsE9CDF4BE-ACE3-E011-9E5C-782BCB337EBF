@@ -1,0 +1,18 @@
+function seleccionContactoCuenta(){
+if (Xrm.Page.getAttribute("axx_tipodecliente").getValue()==0)
+{
+Xrm.Page.ui.tabs.get("general").sections.get("seccioncontacto").setVisible(true);
+Xrm.Page.ui.tabs.get("general").sections.get("seccioncuenta").setVisible(false);
+Xrm.Page.getAttribute("axx_cliente").setRequiredLevel("required");
+Xrm.Page.getAttribute("axx_accountid").setRequiredLevel("none");
+Xrm.Page.getAttribute("axx_accountid").setValue(null);
+}
+else
+{
+Xrm.Page.ui.tabs.get("general").sections.get("seccioncontacto").setVisible(false);
+Xrm.Page.ui.tabs.get("general").sections.get("seccioncuenta").setVisible(true);
+Xrm.Page.getAttribute("axx_cliente").setRequiredLevel("none");
+Xrm.Page.getAttribute("axx_accountid").setRequiredLevel("required");
+Xrm.Page.getAttribute("axx_cliente").setValue(null);
+}
+}

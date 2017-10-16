@@ -1,0 +1,1 @@
+Xrm.Page.ui.controls.get(field).setVisible(false);

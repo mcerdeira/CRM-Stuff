@@ -1,0 +1,13 @@
+function setTarjetaName()
+{
+numero = Xrm.Page.getAttribute("axx_numero").getValue();
+banco = Xrm.Page.getAttribute("axx_banco").getText();
+nombre = numero + " - " +banco;
+//alert ("Establecer Name: " + nombre);
+Xrm.Page.getAttribute("axx_name").setValue(nombre);
+}
+
+function defaultname()
+{
+if (Xrm.Page.getAttribute("axx_name").getValue()==null){Xrm.Page.getAttribute("axx_name").setValue("Temp")}
+}

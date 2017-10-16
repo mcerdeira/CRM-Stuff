@@ -1,0 +1,4 @@
+function bloquear_Name() {
+   Xrm.Page.getAttribute("axx_name").setValue("Configuracion Wondersoft");
+   Xrm.Page.getControl("axx_name").setDisabled(true);
+}

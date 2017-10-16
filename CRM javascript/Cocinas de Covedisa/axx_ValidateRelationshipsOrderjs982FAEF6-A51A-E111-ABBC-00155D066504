@@ -1,0 +1,532 @@
+/*global promocionvaloranterior: true, promociondefaultViewId: true, formadepagodefaultViewId: true
+*/
+function newLookupValue(id, entityType, name) {
+  var olookup = {id: id, entityType: entityType, name: name};
+  return [olookup];
+}
+function getPromocion(origen) {
+  /* Si origen == true es que la funcion fue llamada desde un Campo */
+  var errorMssg = "alerta!";
+  var PromocionId = Xrm.Page.getAttribute("axx_promocion");
+  PromocionId = (PromocionId.getValue()) ? PromocionId.getValue()[0].id : null;
+  if (!PromocionId) { return; }
+
+  var organizationName = Xrm.Page.context.getOrgUniqueName();
+  var serverURL = window.location.protocol + "//" + window.location.hostname + ":" +
+                  window.location.port + "/" + organizationName;
+  var odataSelect = serverURL + "/xrmservices/2011/OrganizationData.svc/axx_promocionSet?" +
+                    "$select=axx_CampanaId,axx_ListadePrecios,axx_PermitirPagounico," +
+                    "axx_promocionId,axx_TipodeCampana&$filter=axx_promocionId eq guid'" +
+                    PromocionId + "'";
+  $.ajax({
+    type: "GET",
+    contentType : "application/json; charset=utf-8",
+    datatype : "json",
+    url : odataSelect,
+    beforeSend : function (XMLHttpRequest) {
+      XMLHttpRequest.setRequestHeader("Accept", "application/json");
+    },
+    success : function (data, textStatus, XmlHttpRequest) {
+      /* Use for a single selected entity */
+      if (data.d.results.length == 0) {
+        alert(errorMssg);
+        return;
+      }
+      if (origen == true) {
+      /* La funcion fue llamada desde un Campo */
+        processPromocion(data.d.results[0], true);
+      } else {
+        /* La funcion fue llamada desde el Load de la ventana */
+        processPromocion(data.d.results[0]);
+      }
+    },
+    error : function (XmlHttpRequest, textStatus, errorThrown) {
+      alert('OData Select Failed: ' + odataSelect);
+    }
+  });
+}
+function setFormadePagoPromocionLookupFilter(flag) {
+  var record1 = Xrm.Page.getAttribute("axx_campanaid").getValue();
+  var record2 = Xrm.Page.getAttribute("axx_promocion").getValue();
+  if ((record1 != null) && (record2 != null)) {
+    var recordid1 = record1[0].id;
+    var recordname1 = record1[0].name;
+    var recordid2 = record2[0].id;
+    var recordname2 = record2[0].name;
+    var viewId = "{00000000-0000-0000-0000-000000000002}";
+    var entityName = "axx_formadepago";
+    var viewDisplayName = "Formas de Pago - " + recordname1 + " - " + recordname2;
+    var fetchXml = "<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='true'>" +
+                    "<entity name='axx_formadepago'>" +
+                    "<attribute name='axx_formadepagoid' />" +
+                    "<order attribute='axx_name' descending='false' />" +
+                    "<link-entity name='axx_promocion_formadepago' from='axx_formadepagoid' to='axx_formadepagoid' visible='false' intersect='true'>" +
+                    "<link-entity name='axx_promocion' from='axx_promocionid' to='axx_promocionid' alias='aa'>" +
+                    "<filter type='and'>" +
+                    "<condition attribute='axx_campanaid' operator='eq'  value='" + recordid1 + "' />" +
+                    "<condition attribute='axx_promocionid' operator='eq'  value='" + recordid2 + "' />" +
+                    "</filter>" +
+                    "</link-entity>" +
+                    "</link-entity>" +
+                    "</entity>" +
+                    "</fetch>";
+    var layoutXml = "<grid name='resultset' object='10005' jump='axx_name' select='1' icon='1' preview='1'>" +
+                    "<row name='result' id='axx_formadepagoid'>" +
+                    "<cell name='axx_name' width='5' />" +
+                    "<cell name='axx_formadepago' width='100' />" +
+                    "<cell name='axx_mediodepagoid' width='120' />" +
+                    "<cell name='axx_entidadbancariaid' width='120' />" +
+                    "<cell name='axx_cuotasseparadosporcomas' width='100'/>" +
+                    "<cell name='statecode' width='100' />" +
+                    "</row>" +
+                    "</grid>";
+    Xrm.Page.getControl("axx_formadepago").addCustomView(viewId, entityName, viewDisplayName, fetchXml, layoutXml, true);
+  }
+}
+function setPromocionLookupFilter(flag) {
+  var record1 = Xrm.Page.getAttribute("axx_campanaid").getValue();
+  if (record1 != null) {
+    var recordid1 = record1[0].id;
+    var recordname1 = record1[0].name;
+    var viewId = "{00000000-0000-0000-0000-000000000001}";
+    var entityName = "axx_promocion";
+    var viewDisplayName = "Promos activas - " + recordname1;
+    var fetchXml = "<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>" +
+                    "<entity name='axx_promocion'>" +
+                    "<attribute name='axx_name' />" +
+                    "<attribute name='createdon' />" +
+                    "<attribute name='axx_promocionid' />" +
+                    "<order attribute='axx_name' descending='false' />" +
+                    "<filter type='and'>" +
+                    "<condition attribute='statecode' operator='eq' value='0' />" +
+                    "</filter>" +
+                    "<link-entity name='axx_campana' from='axx_campanaid' to='axx_campanaid' alias='aa'>" +
+                    "<filter type='and'>" +
+                    "<condition attribute='axx_campanaid' operator='eq' value='" + recordid1 + "' />" +
+                    "</filter>" +
+                    "</link-entity>" +
+                    "</entity>" +
+                    "</fetch>";
+    var layoutXml = "<grid name='resultset' object='1' select='1' jump='axx_promocionid' icon='1' preview='1'>" +
+                    "<row name='result' id='axx_promocionid' >" +
+                    "<cell name='axx_name' width='200' />" +
+                    "<cell name='axx_listadebonificacionid' width='150'/>" +
+                    "<cell name='axx_listadeprecios' width='150'/>" +
+                    "</row>" +
+                    "</grid>";
+    Xrm.Page.getControl("axx_promocion").addCustomView(viewId, entityName, viewDisplayName, fetchXml, layoutXml, true);
+  }
+}
+function formOnLoad() {
+  promocionvaloranterior = Xrm.Page.getAttribute("axx_promocion").getValue();
+  promociondefaultViewId = Xrm.Page.getControl("axx_promocion").getDefaultView();
+  formadepagodefaultViewId = Xrm.Page.getControl("axx_formadepago").getDefaultView();
+  setPromocionLookupFilter(false);
+  if (Xrm.Page.getAttribute("axx_campanaid").getValue() == null) {
+    Xrm.Page.getControl("axx_promocion").setDisabled(true);
+    promocionvaloranterior = null;
+    Xrm.Page.getControl("axx_formadepago").setDisabled(true);
+  } else if (Xrm.Page.getAttribute("axx_promocion").getValue() != null) {
+    Xrm.Page.getControl("axx_promocion").setLabel("Promoción (Locked)");
+    Xrm.Page.getControl("axx_formadepago").setLabel("Forma de Pago");
+    setFormadePagoPromocionLookupFilter(false);
+    setPromocionLookupFilter(false);
+    getPromocion();
+    promocionvaloranterior = Xrm.Page.getAttribute("axx_promocion").getValue();
+  }
+
+  var customer = Xrm.Page.getAttribute("customerid");
+  var formaDePago = Xrm.Page.getAttribute("axx_formadepago");
+  if (customer.getValue() != null && formaDePago.getValue() != null) {
+    getFormaDePago();
+    Xrm.Page.getControl("axx_tarjetaid").setDisabled(false);
+    changepromocion(true);
+  } else {
+    Xrm.Page.getControl("axx_tarjetaid").setDisabled(true);
+    changepromocion(true);
+  }
+}
+function changeCuentaContacto() {
+  var tarjetaId = Xrm.Page.getAttribute("axx_tarjetaid");
+  Xrm.Page.getAttribute("axx_tarjetaid").setValue(null);
+  Xrm.Page.getAttribute("axx_tarjetaid").setSubmitMode("always");
+  if (Xrm.Page.getAttribute("customerid").getValue() == null) {
+    Xrm.Page.getControl("axx_tarjetaid").setDisabled(true);
+  } else if (Xrm.Page.getAttribute("axx_formadepago").getValue() != null) {
+    Xrm.Page.getControl("axx_tarjetaid").setDisabled(false);
+    getFormaDePago();
+  }
+}
+function changecampana() {
+  if (Xrm.Page.getAttribute("axx_campanaid").getValue() != null) {
+    Xrm.Page.getControl("axx_promocion").setDisabled(false);
+    Xrm.Page.getControl("axx_formadepago").setDisabled(true);
+    Xrm.Page.getAttribute("axx_promocion").setValue(null);
+    Xrm.Page.getAttribute("axx_tarjetaid").setValue(null);
+    Xrm.Page.getAttribute("axx_formadepago").setValue(null);
+    Xrm.Page.getAttribute("axx_promocion").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_tarjetaid").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_formadepago").setSubmitMode("always");
+    setPromocionLookupFilter(false);
+    setFormadePagoLookupFilter(false);
+  } else {
+    Xrm.Page.getControl("axx_promocion").setDisabled(true);
+    Xrm.Page.getControl("axx_formadepago").setDisabled(true);
+    Xrm.Page.getControl("axx_tarjetaid").setDisabled(true);
+    Xrm.Page.getAttribute("axx_promocion").setValue(null);
+    Xrm.Page.getAttribute("axx_tarjetaid").setValue(null);
+    Xrm.Page.getAttribute("axx_formadepago").setValue(null);
+    Xrm.Page.getAttribute("axx_promocion").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_tarjetaid").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_formadepago").setSubmitMode("always");
+  }
+}
+function changepromocion(isLoad) {
+  var tarjeta = Xrm.Page.getAttribute("axx_tarjetaid").getValue();
+  var formapago = Xrm.Page.getAttribute("axx_formadepago").getValue();
+  if (promocionvaloranterior != Xrm.Page.getAttribute("axx_promocion").getValue()) {
+    if (!isLoad) {
+      Xrm.Page.getAttribute("axx_tarjetaid").setValue(null);
+      Xrm.Page.getAttribute("axx_formadepago").setValue(null);
+      Xrm.Page.getControl("axx_tarjetaid").setDisabled(true);
+      Xrm.Page.getAttribute("axx_tarjetaid").setSubmitMode("always");
+      Xrm.Page.getAttribute("axx_formadepago").setSubmitMode("always");
+    }
+  }
+
+  promocionvaloranterior = Xrm.Page.getAttribute("axx_promocion").getValue();
+  if (Xrm.Page.getAttribute("axx_promocion").getValue() != null) {
+    Xrm.Page.getControl("axx_promocion").setLabel("Promoción");
+    Xrm.Page.getControl("axx_formadepago").setLabel("Forma de Pago");
+    Xrm.Page.getControl("axx_formadepago").setDisabled(false);
+    setFormadePagoPromocionLookupFilter(false);
+    setPromocionLookupFilter(false);
+
+    var origen = !isLoad;
+    getPromocion(origen);
+    /* Si origen == true es que la funcion fue llamada desde un Campo */
+  } else {
+    if (!isLoad) {
+      Xrm.Page.getControl("axx_formadepago").setDisabled(true);
+      Xrm.Page.getAttribute("axx_formadepago").setValue(null);
+      Xrm.Page.getAttribute("axx_formadepago").setSubmitMode("always");
+    }
+
+    Xrm.Page.getControl("axx_promocion").setLabel("Promoción");
+    setFormadePagoLookupFilter(false);
+  }
+}
+function changeformadepago() {
+  var formaDePago = Xrm.Page.getAttribute("axx_formadepago");
+  var promocion = Xrm.Page.getAttribute("axx_promocion");
+  if (formaDePago.getValue() != null && promocion.getValue() == null) {
+    Xrm.Page.getControl("axx_formadepago").setLabel("Forma de Pago (Locked)");
+    Xrm.Page.getControl("axx_promocion").setLabel("Promoción");
+    setPromocionFormadePagoLookupFilter(false);
+    setFormadePagoLookupFilter(false);
+  } else {
+    Xrm.Page.getControl("axx_formadepago").setLabel("Forma de Pago");
+    setPromocionLookupFilter(false);
+  }
+
+  if (formaDePago.getValue() != null) {
+    if (Xrm.Page.getAttribute("customerid").getValue() != null) {
+      Xrm.Page.getControl("axx_tarjetaid").setDisabled(false);
+      Xrm.Page.getAttribute("axx_tarjetaid").setValue(null);
+      Xrm.Page.getAttribute("axx_tarjetaid").setSubmitMode("always");
+      getFormaDePago();
+    }
+  } else {
+    Xrm.Page.getControl("axx_tarjetaid").setDisabled(true);
+    Xrm.Page.getAttribute("axx_tarjetaid").setValue(null);
+    Xrm.Page.getAttribute("axx_tarjetaid").setSubmitMode("always");
+  }
+}
+function changetarjeta() {
+}
+function setPromocionFormadePagoLookupFilter(flag) {
+  var record1 = Xrm.Page.getAttribute("axx_campanaid").getValue();
+  var record2 = Xrm.Page.getAttribute("axx_formadepago").getValue();
+  if ((record1 != null) && (record2 != null)) {
+    var recordid1 = record1[0].id;
+    var recordname1 = record1[0].name;
+    var recordid2 = record2[0].id;
+    var recordname2 = record2[0].name;
+    var viewId = "{00000000-0000-0000-0000-000000000001}";
+    var entityName = "axx_promocion";
+    var viewDisplayName = "Promos activas - " + recordname1 + " - " + recordname2;
+    var fetchXml =  "<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='true'>" +
+                    "<entity name='axx_promocion'>" +
+                    "<attribute name='axx_promocionid' />" +
+                    "<attribute name='axx_name' />" +
+                    "<attribute name='createdon' />" +
+                    "<order attribute='axx_name' descending='false' />" +
+                    "<filter type='and'>" +
+                    "<condition attribute='statecode' operator='eq' value='0' />" +
+                    "</filter>" +
+                    "<link-entity name='axx_promocion_formadepago' from='axx_promocionid' to='axx_promocionid' visible='false' intersect='true'>" +
+                    "<link-entity name='axx_formadepago' from='axx_formadepagoid' to='axx_formadepagoid' alias='aa'>" +
+                    "<filter type='and'>" +
+                    "<condition attribute='axx_formadepagoid' operator='eq' value='" + recordid2 + "' />" +
+                    "</filter>" +
+                    "</link-entity>" +
+                    "</link-entity>" +
+                    "<link-entity name='axx_campana' from='axx_campanaid' to='axx_campanaid' alias='ab'>" +
+                    "<filter type='and'>" +
+                    "<condition attribute='axx_campanaid' operator='eq' value='" + recordid1 + "' />" +
+                    "</filter>" +
+                    "</link-entity>" +
+                    "</entity>" +
+                    "</fetch>";
+    var layoutXml = "<grid name='resultset' object='1' select='1' jump='axx_promocionid' icon='1' preview='1'>" +
+                    "<row name='result' id='axx_promocionid' >" +
+                    "<cell name='axx_name' width='200' />" +
+                    "<cell name='axx_listadebonificacionid' width='150'/>" +
+                    "<cell name='axx_listadeprecios' width='150'/>" +
+                    "</row>" +
+                    "</grid>";
+    Xrm.Page.getControl("axx_promocion").addCustomView(viewId, entityName, viewDisplayName, fetchXml, layoutXml, true);
+  }
+}
+function setFormadePagoLookupFilter(flag) {
+  var record1 = Xrm.Page.getAttribute("axx_campanaid").getValue();
+  if (record1 != null) {
+    var recordid1 = record1[0].id;
+    var recordname1 = record1[0].name;
+    var viewId = "{00000000-0000-0000-0000-000000000002}";
+    var entityName = "axx_formadepago";
+    var viewDisplayName = "Formas de Pago - " + recordname1;
+    var fetchXml =  "<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='true'>" +
+                    "<entity name='axx_formadepago'>" +
+                    "<attribute name='axx_formadepagoid' />" +
+                    "<order attribute='axx_name' descending='false' />" +
+                    "<link-entity name='axx_promocion_formadepago' from='axx_formadepagoid' to='axx_formadepagoid' visible='false' intersect='true'>" +
+                    "<link-entity name='axx_promocion' from='axx_promocionid' to='axx_promocionid' alias='aa'>" +
+                    "<filter type='and'>" +
+                    "<condition attribute='axx_campanaid' operator='eq' value='" +  recordid1 + "' />" +
+                    "</filter>" +
+                    "</link-entity>" +
+                    "</link-entity>" +
+                    "</entity>" +
+                    "</fetch>";
+    var layoutXml = "<grid name='resultset' object='10005' jump='axx_name' select='1' icon='1' preview='1'>" +
+                    "<row name='result' id='axx_formadepagoid'>" +
+                    "<cell name='axx_name' width='5' />" +
+                    "<cell name='axx_formadepago' width='100' />" +
+                    "<cell name='axx_mediodepagoid' width='120' />" +
+                    "<cell name='axx_entidadbancariaid' width='120' />" +
+                    "<cell name='axx_cuotasseparadosporcomas' width='100'/>" +
+                    "<cell name='statecode' width='100' />" +
+                    "</row>" +
+                    "</grid>";
+    Xrm.Page.getControl("axx_formadepago").addCustomView(viewId, entityName, viewDisplayName, fetchXml, layoutXml, true);
+  }
+}
+function setTarjetaFormadePagoLookupFilter(flag) {
+  var record1 = Xrm.Page.getAttribute("customerid").getValue();
+  var record1type = record1[0].type;
+  var record3 = formadepagomedio;
+  var record3n = formadepagomedioname;
+  var record4 = formadepagobanco;
+  var record4n = formadepagobanconame;
+  var nofiltrarbancos = formadepagotodoslosbancos;
+  if (nofiltrarbancos == true) {
+    record4n = "Todos los Bancos";
+  }
+  var tipo = fromadepagotipo;
+  if (record1 != null) {
+    var recordid1 = record1[0].id;
+    var recordname1 = record1[0].name;
+    var viewId = "{00000000-0000-0000-0000-000000000004}";
+    var entityName = "axx_tarjeta";
+    var viewDisplayName = "Tarjetas - " + recordname1 + " - " + record3n + " - " + record4n;
+    var fetchXml =  "<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>" +
+                    "<entity name='axx_tarjeta'>" +
+                    "<attribute name='axx_tarjetaid' />" +
+                    "<attribute name='axx_name' />" +
+                    "<attribute name='createdon' />" +
+                    "<order attribute='axx_name' descending='false' />" +
+                    "<filter type='and'>" +
+                    "<condition attribute='statecode' operator='eq' value='0' />";
+    if (record1type == "2") {
+      fetchXml = fetchXml + "<condition attribute='axx_cliente' operator='eq' value='" + recordid1 + "' />";
+    } else {
+      fetchXml = fetchXml + "<condition attribute='axx_accountid' operator='eq' value='" + recordid1 + "' />";
+    }
+
+    if (record3 != "") {
+      fetchXml = fetchXml + "<condition attribute='axx_tarjetamstid' operator='eq' value='{" + record3 + "}' />";
+    }
+
+    /* Se consideran las tarjetas de Credito y Debito para todos los casos.
+    if (tipo != null) {
+      fetchXml = fetchXml + "<condition attribute='axx_tipo' operator='eq' value='" + tipo + "' />";
+    }
+    */
+    if ((record4 != "") && (nofiltrarbancos == false)) {
+      fetchXml = fetchXml + "<condition attribute='axx_bancoid' operator='eq' value='{" + record4 + "}' />";
+    }
+
+    fetchXml = fetchXml + "</filter></entity></fetch>";
+
+    var layoutXml = "<grid name='resultset' object='10029' jump='axx_name' select='1' icon='1' preview='1'>" +
+                    "<row name='result' id='axx_tarjetaid'>" +
+                    "<cell name='axx_bancoid' width='150'/>" +
+                    "<cell name='axx_tarjetamstid' width='150'/>" +
+                    "<cell name='axx_tipo' width='100'/>" +
+                    "<cell name='axx_ultimosdigitos' width='100'/>" +
+                    "</row>" +
+                    "</grid>";
+    Xrm.Page.getControl("axx_tarjetaid").addCustomView(viewId, entityName, viewDisplayName, fetchXml, layoutXml, true);
+  }
+}
+function getTarjeta() {
+  var errorMssg = "alerta!";
+  var TarjetaId = Xrm.Page.getAttribute("axx_tarjetaid");
+  TarjetaId = (TarjetaId.getValue()) ? TarjetaId.getValue()[0].id : null;
+  if (!TarjetaId) {
+    completarDatosTarjeta();
+    return;
+  }
+
+  var organizationName = Xrm.Page.context.getOrgUniqueName();
+  var serverURL = window.location.protocol + "//" + window.location.hostname + ":" +
+                  window.location.port + "/" + organizationName;
+  var odataSelect = serverURL + "/xrmservices/2011/OrganizationData.svc/axx_tarjetaSet?" +
+                    "$select=axx_BancoId,axx_tarjetaId,axx_TarjetaMstId,axx_Fecha_de_Vencimiento,axx_UltimosDigitos&" +
+                    "filter=axx_tarjetaId eq guid'" + TarjetaId + "'";
+  $.ajax({
+    type: "GET",
+    contentType : "application/json; charset=utf-8",
+    datatype : "json",
+    url : odataSelect,
+    beforeSend : function (XMLHttpRequest) {
+      XMLHttpRequest.setRequestHeader("Accept", "application/json");
+    },
+    success : function (data, textStatus, XmlHttpRequest) {
+      /* Use for a single selected entity */
+      if (data.d.results.length == 0) {
+        alert(errorMssg);
+        return;
+      }
+      processTarjeta(data.d.results[0]);
+    },
+    error : function (XmlHttpRequest, textStatus, errorThrown) {
+      alert('OData Select Failed: ' + odataSelect);
+    }
+  });
+}
+function processTarjeta(OneEntity) {
+  var oneEntity = OneEntity;
+  tarjetamedio = oneEntity.axx_TarjetaMstId.Id;
+  tarjetamedioname = oneEntity.axx_TarjetaMstId.Name;
+  tarjetabanco = oneEntity.axx_BancoId.Id;
+  tarjetabanconame = oneEntity.axx_BancoId.Name;
+  tarjetafechavencimiento = oneEntity.axx_Fecha_de_Vencimiento;
+  tarjetaultimosdigitos = oneEntity.axx_UltimosDigitos;
+
+  /*
+  * completarDatosTarjeta();
+  */
+}
+function getFormaDePago() {
+  var errorMssg = "alerta!";
+  var FormadePagoId = Xrm.Page.getAttribute("axx_formadepago");
+  FormadePagoId = (FormadePagoId.getValue()) ? FormadePagoId.getValue()[0].id : null;
+  if (!FormadePagoId) {
+    return;
+  }
+
+  var organizationName = Xrm.Page.context.getOrgUniqueName();
+  var serverURL = window.location.protocol + "//" + window.location.hostname + ":" +
+                  window.location.port + "/" + organizationName;
+  var odataSelect = serverURL + "/xrmservices/2011/OrganizationData.svc/axx_formadepagoSet?" +
+                    "$select=axx_EntidadBancariaId,axx_formadepagoId,axx_MediodePagoId," +
+                    "axx_Todoslosmedios,axx_FormadePago&$filter=axx_formadepagoId eq guid'" + FormadePagoId + "'";
+  $.ajax({
+    type: "GET",
+    contentType : "application/json; charset=utf-8",
+    datatype : "json",
+    url : odataSelect,
+    beforeSend : function (XMLHttpRequest) {
+      XMLHttpRequest.setRequestHeader("Accept", "application/json");
+    },
+    success : function (data, textStatus, XmlHttpRequest) {
+      /* Use for a single selected entity */
+      if (data.d.results.length == 0) {
+        alert(errorMssg);
+        return;
+      }
+      processFormaDePago(data.d.results[0]);
+    },
+    error : function (XmlHttpRequest, textStatus, errorThrown) {
+      alert('OData Select Failed: ' + odataSelect);
+    }
+  });
+}
+function processFormaDePago(oneEntity) {
+  var valorForma = Xrm.Page.getAttribute("axx_formadepago").getValue()[0];
+  formadepagoforma = valorForma.name;
+  formadepagoformaname = valorForma.id;
+  formadepagomedio = oneEntity.axx_MediodePagoId.Id;
+  formadepagomedioname = oneEntity.axx_MediodePagoId.Name;
+  formadepagobanco = oneEntity.axx_EntidadBancariaId.Id;
+  formadepagobanconame = oneEntity.axx_EntidadBancariaId.Name;
+  formadepagotodoslosbancos = oneEntity.axx_Todoslosmedios;
+  fromadepagotipo = oneEntity.axx_FormadePago.Value;
+  setTarjetaFormadePagoLookupFilter();
+}
+function completarDatosTarjeta() {
+  if (Xrm.Page.getAttribute("axx_tarjetaid").getValue() != null) {
+    var fechav = new Date(parseInt(tarjetafechavencimiento.replace("/Date(", "").replace(")/", ""), 10));
+    var fechavst = fechav.getMonth() + "/" + fechav.getYear();
+    if (tarjetabanconame == null) {
+      var tarjebanco = "No especificado";
+    }
+
+    Xrm.Page.getAttribute("axx_tarjeta_fechadevencimiento").setValue(fechavst);
+    Xrm.Page.getAttribute("axx_tarjeta_banco").setValue(tarjebanco);
+    Xrm.Page.getAttribute("axx_tarjeta_ultimosdigitos").setValue(tarjetaultimosdigitos);
+    Xrm.Page.getAttribute("axx_tarjeta_fechadevencimiento").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_tarjeta_banco").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_tarjeta_ultimosdigitos").setSubmitMode("always");
+  } else {
+    Xrm.Page.getAttribute("axx_tarjeta_fechadevencimiento").setValue(null);
+    Xrm.Page.getAttribute("axx_tarjeta_banco").setValue(null);
+    Xrm.Page.getAttribute("axx_tarjeta_ultimosdigitos").setValue(null);
+    Xrm.Page.getAttribute("axx_tarjeta_fechadevencimiento").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_tarjeta_banco").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_tarjeta_ultimosdigitos").setSubmitMode("always");
+  }
+}
+function processPromocion(OneEntity, Origen) {
+  var lookupValue;
+  var oneEntity = OneEntity;
+  valorPromocion = Xrm.Page.getAttribute("axx_promocion").getValue()[0];
+  promocionPromo = valorPromocion.name;
+  promocionPromoId = valorPromocion.id;
+  promocionCampana = oneEntity.axx_CampanaId.Id;
+  promocionCampananame = oneEntity.axx_CampanaId.Name;
+  promocionTipo = oneEntity.axx_TipodeCampana.Value;
+  promocionPagoUnico = oneEntity.axx_PermitirPagounico;
+
+  /* Cargar Lista de Precios de la Promocion */
+  var promocionListaPrecios = oneEntity.axx_ListadePrecios.Id;
+  var promocionListaPreciosName = oneEntity.axx_ListadePrecios.Name;
+  var promocionListaPreciosTipo = oneEntity.axx_ListadePrecios.LogicalName;
+  var ListaDePrecio = Xrm.Page.getAttribute("pricelevelid");
+  promocionListaPrecios = (promocionListaPrecios) ? promocionListaPrecios : "";
+  if (ListaDePrecio.getValue()[0].id != "{" + promocionListaPrecios.toUpperCase() + "}") {
+    if (Origen == true) {
+      /* La funcion fue llamada desde un Campo */
+      if (ListaDePrecio.getValue()[0].id != promocionListaPrecios) {
+        lookupValue = newLookupValue(promocionListaPrecios, promocionListaPreciosTipo, promocionListaPreciosName);
+        ListaDePrecio.setValue(lookupValue);
+      }
+    } else if (ListaDePrecio.getValue()[0].id == "") {
+      /* La funcion fue llamada desde el load de la ventana */
+      lookupValue = newLookupValue(promocionListaPrecios, promocionListaPreciosTipo, promocionListaPreciosName);
+      ListaDePrecio.setValue(lookupValue);
+    }
+  }
+}

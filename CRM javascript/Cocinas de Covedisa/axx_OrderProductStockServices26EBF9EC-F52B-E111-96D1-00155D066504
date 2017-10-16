@@ -1,0 +1,28 @@
+function consulta()
+{
+ 
+alert("Debug");
+
+var xml =
+"<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tem=\"http://tempuri.org/\" xmlns:stoc=\"http://schemas.datacontract.org/2004/07/StockService\">" +
+   "<soapenv:Header/>"  +
+     "<soapenv:Body>" + 
+      "<tem:IsPriority>" + 
+         "<tem:wsIn>" +
+            "<stoc:CampaignId>4DDB1D35-121D-E111-ABBC-00155D066504</stoc:CampaignId>" +
+            "<stoc:ItemId>FD63239F-8501-4969-9E71-48A511C05C52</stoc:ItemId>" +
+         "</tem:wsIn>" +
+      "</tem:IsPriority>" +
+   "</soapenv:Body>" +
+"</soapenv:Envelope>";
+
+
+var xmlHttpRequest = new ActiveXObject("Msxml2.XMLHTTP");
+var wsURL = window.location.protocol + "//" + window.location.hostname + "/StockService-testing/StockService.svc";
+xmlHttpRequest.open("POST", wsURL, false, "COVEDISA\axadmin", "Coved159");
+xmlHttpRequest.setRequestHeader("Content-Type", "text/xml; charset=utf-8");
+xmlHttpRequest.send(xml);
+var DOM = new ActiveXObject("Msxml2.DOMDocument");
+DOM.loadXML(xmlHttpRequest.responseText);
+
+}

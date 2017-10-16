@@ -1,0 +1,35 @@
+function abrirCampanaClonada(onChange)
+{
+	if (onChange){
+		//Xrm.Page.data.entity.save("saveandclose");
+	}else if (Xrm.Page.getAttribute("axx_registroclonadoid").getValue() != null){
+			cloneid = Xrm.Page.getAttribute("axx_registroclonadoid").getValue();
+		 
+			var serverURL = window.location.protocol + "//" + window.location.hostname  + ":" +  window.location.port + "/" + Xrm.Page.context.getOrgUniqueName();
+      var windowWidth = document.body.clientWidth;
+      var windowHeight = document.body.clientHeight + 200;
+      window.open(serverURL +
+                  "/main.aspx?etc=10002&extraqs=%3f_gridType%3d10006%26etc%3d10006%26id%3d%257b" + 
+                  cloneid+
+                  "%257d%26rskey%3d559062437&pagetype=entityrecord", null,"width="  + windowWidth + ",height=" + windowHeight + "status=yes,scrollbars,resizable");
+			
+      clearCloneId();
+	}
+}
+
+function clearCloneId(){
+  Xrm.Page.getAttribute("axx_registroclonadoid").setValue(null);
+  
+  //Xrm.Page.ui.controls.get("SubGrid").getDisabled=false;
+  //Workaround para un posible bug al guardar cuando hay subgrids. 
+  Xrm.Page.ui.controls.get("Promociones").getDisabled=false;
+  Xrm.Page.data.entity.save();
+  
+}
+
+
+function botonClonar()
+{
+  Xrm.Page.getAttribute("axx_clonarcampana").setValue(true);
+  Xrm.Page.data.entity.save();
+}

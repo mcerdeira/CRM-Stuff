@@ -1,0 +1,382 @@
+function defaultContacto() {
+  if(isFormReadOnly()){return;}
+  document.getElementById("customerid").setAttribute("defaulttype", "2");
+}
+
+// Disable a subgrid on a form
+function disableSubgrid(subgridName) {
+  document.getElementById(subgridName + "_span").disabled = "true";
+}
+
+function isFormReadOnly(){
+  return ((Xrm.Page.ui.getFormType() != 1) && (Xrm.Page.ui.getFormType() != 2));
+}
+
+function nameSalesOrder() {
+  if(isFormReadOnly()){return;}
+  var name = "", listSep = ", ", usar = true, destination = "name";
+
+  nameParts = new Array();
+  var att = Xrm.Page.getAttribute;
+
+  nameParts[1] = getAttributeValue("axx_tipopedido", listSep);
+  nameParts[2] = ' # ';
+  nameParts[3] = getAttributeValue("ordernumber", listSep);
+  nameParts[4] = ': ';
+  nameParts[5] = getAttributeValue("customerid", listSep);
+
+  var oLength = nameParts.length;
+  for (i = 1; i < oLength; i++) {
+    usar = true;
+    switch (i) {
+    case 2:
+      usar = esV(1) && esV(3);
+      break;
+    case 4:
+      usar = nameParts[5] != "Sin Cliente";
+      break;
+    case 5:
+      usar = nameParts[5] != "Sin Cliente";
+      break;
+    }
+    name += (usar) ? nameParts[i] : "";
+  }
+
+  att(destination).setValue(name);
+  att(destination).setSubmitMode("always");
+}
+
+function esV(num) {
+  return (nameParts[num] != "");
+}
+
+function setFieldArraySubmitMode(fieldsToSubmit, mode) {
+  var arrayLength = fieldsToSubmit.length;
+  for (i = 0; i < arrayLength; i++) {
+    Xrm.Page.getAttribute(fieldsToSubmit[i]).setSubmitMode(mode);
+  }
+}
+
+function getShipToAddress() {
+  var rAddress = getAddressFromLookup("customerid");
+  var xat = Xrm.Page.getAttribute;
+  if (rAddress != null) {
+
+    xat("shipto_name").setValue(rAddress[1].value);
+    xat("shipto_line1").setValue(rAddress[2].value);
+    xat("axx_shipto_numero").setValue(rAddress[3].value);
+    xat("axx_shipto_piso").setValue(rAddress[4].value);
+    xat("axx_shipto_departamento").setValue(rAddress[5].value);
+    xat("shipto_postalcode").setValue(rAddress[7].value);
+    xat("shipto_telephone").setValue(rAddress[6].value);
+    xat("shipto_country").setValue(rAddress[8].value);
+    xat("shipto_stateorprovince").setValue(rAddress[9].value);
+    xat("shipto_city").setValue(rAddress[10].value);
+    xat("axx_shipto_localidad").setValue(rAddress[11].value);
+    xat("axx_shipto_barrio").setValue(rAddress[12].value);
+    xat("axx_shipto_jurisdiccion").setValue(rAddress[13].value);
+    xat("axx_addresscomments").setValue(rAddress[14].value);
+
+    var fieldsToSubmit  = ["shipto_name", "shipto_line1", "axx_shipto_numero", "axx_shipto_piso", "axx_shipto_departamento",
+                          "shipto_postalcode", "shipto_telephone", "shipto_country", "shipto_stateorprovince", "shipto_city",
+                          "axx_shipto_localidad", "axx_shipto_barrio", "axx_shipto_jurisdiccion", "axx_addresscomments"];
+
+    setFieldArraySubmitMode(fieldsToSubmit, "always");
+  }
+  if (Xrm.Page.ui.getFormType() == 2 && xat("totalamount").getValue() > 0) {
+    updateGastoEnvioNoValidado();
+    solicitarRecalculo();
+  }
+}
+
+function updateGastoEnvioNoValidado() {
+  salesOrderId = Xrm.Page.data.entity.getId();
+  //Este campo especifica que el gasto de envio no está validado.
+  var salesorder = {axx_gastoDeEnvioValidado : false};
+  var sync = true;
+
+  jQuery.support.cors = true;
+  SDK.JQuery.updateRecord(
+    salesOrderId,
+    salesorder,
+    "SalesOrder",
+    function () {
+      //Sucessed
+
+    },
+    function () {
+      //Error
+      alert("error al actualizar la validación de gasto de envio");
+    },
+    sync
+  );
+}
+
+function solicitarRecalculo() {
+  if (confirm("¿Desea recalcular el gasto de envío?")) {
+    getCustomSalesOrderDetail();
+  }
+}
+
+function _getServerURL() {
+  return window.location.protocol + "//" + window.location.hostname + ":" +
+        window.location.port + "/" + Xrm.Page.context.getOrgUniqueName();
+}
+
+function ajax_checkGastoDeEnvio() {
+  var odataSelect = _getServerURL() +
+                    "xrmservices/2011/OrganizationData.svc/SalesOrderSet?" +
+                    "$select=axx_gastoDeEnvioValidado&$filter=SalesOrderId eq guid'" +
+                    Xrm.Page.data.entity.getId() + "'";
+  return $.ajax({
+    type: "GET",
+    contentType: "application/json; charset=utf-8",
+    datatype: "json",
+    url: odataSelect,
+    beforeSend: function (XMLHttpRequest) { XMLHttpRequest.setRequestHeader("Accept", "application/json"); },
+    success : function (data, textStatus, XmlHttpRequest) {
+      // Use for a single selected entity
+      checkGastoDeEnvio(data.d.results[0]);
+    },
+    error: function (XmlHttpRequest, textStatus, errorThrown) {
+      checkGastoDeEnvio(null);
+    }
+  });
+}
+
+function checkGastoDeEnvio(result) {
+  var validado;
+  if (result == null) {
+    //TODO Mostrar error.
+
+    validado = false;
+  } else {
+    validado = (result.axx_gastoDeEnvioValidado == true);
+  }
+
+  if (validado) {
+    //TODO Alertar
+    solicitarRecalculo();
+  }
+}
+
+function getAddressFromLookup(Customerfield) {
+  if(isFormReadOnly()){return;}
+  var retrievedLookupAddress = null;
+  var errorMssg = "Debe seleccionar un cliente antes de buscar direcciones";
+  var orgName = Xrm.Page.context.getOrgUniqueName();
+  var customerValue = Xrm.Page.getAttribute(Customerfield).getValue();
+  if (!customerValue) {
+    alert(errorMssg);
+    return;
+  }
+  var customerType = (customerValue[0].entityType == "contact") ? 2 : 1;
+  var custId = customerValue[0].id;
+  var url = "";
+  url += '/' + orgName + '/_controls/lookup/lookupsingle.aspx?class=BrowseCustomerAddress&';
+  url += 'objecttypes=1071&browse=1&bindingcolumns=line1%2cpostalcode&parentType=' + customerType;
+  url += '&parentId=' + custId + '&ShowNewButton=1&ShowPropButton=1&DefaultType=1071';
+  var selectedAddress = window.showModalDialog(url, null, 'dialogWidth:600px;dialogHeight:350px;resizable:yes');
+  if (selectedAddress != null) {
+    retrievedLookupAddress = JSON.parse(selectedAddress.items[0].values);
+  }
+  return retrievedLookupAddress;
+}
+
+function borrarDireccionesOnChange() {
+  var fields = ["shipto_name", "shipto_line1", "axx_shipto_numero", "axx_shipto_piso", "axx_shipto_departamento",
+                "shipto_postalcode", "shipto_telephone", "shipto_country", "shipto_stateorprovince", "shipto_city",
+                "axx_shipto_localidad", "axx_shipto_barrio", "axx_shipto_jurisdiccion"];
+  var i;
+  for (i = 0; i < fields.length; i++) {
+    Xrm.Page.getAttribute(fields[i]).setValue(null);
+    Xrm.Page.getAttribute(fields[i]).setSubmitMode("always");
+  }
+}
+
+function habilitarBuscarDireccion() {
+  var hasCustomer =  ((Xrm.Page.getAttribute("customerid").getValue()) && (Xrm.Page.getAttribute("customerid").getValue()[0]));
+  var readOnlyForm = ((Xrm.Page.ui.getFormType() != 1) && (Xrm.Page.ui.getFormType() != 2));
+
+  if (!readOnlyForm && hasCustomer) {
+    getButton("WebResource_BuscarDireccion").Enable();
+  } else {
+    getButton("WebResource_BuscarDireccion").Disable();
+  }
+}
+
+function getButton(webResource) {
+  return getIFrame(webResource).crmButton;
+}
+
+function getIFrame(webResource) {
+  var control = Xrm.Page.ui.controls.get(webResource);
+  var id      = control.getObject().id;
+  var frame   = document.frames[id];
+  return frame;
+}
+
+function getCustomSalesOrderDetail(isLoad) {
+  // Llamada a ventana custom de linea de pedidos
+  var context = Xrm.Page.context;
+  var priceList = lookup2guid(Xrm.Page.getAttribute("pricelevelid").getValue());
+  var campaign  = lookup2guid(Xrm.Page.getAttribute("axx_campanaid").getValue());
+  var altprclst = GetAlternativePriceList(Xrm.Page.data.entity.getId());
+
+  if (campaign == "") {
+    alert("Funcion getCustomSalesOrderDetail: \n\nDebe ingresar una campaña antes de ejecutar esta acción");
+    return;
+  }
+  if (priceList == "") {
+    alert("Funcion getCustomSalesOrderDetail: \n\nNo hay una Lista de Precios asignada.\nNo se puede ejecutar esta acción");
+    return;
+  }
+  if (Xrm.Page.data.entity.getIsDirty()) {//Si el formulario no fue guardado.
+    if (isLoad) {
+      alert("Funcion getCustomSalesOrderDetail: \n\nHay cambios sin guardar.\nDebe guardar el Pedido antes de ejecutar esta acción");
+
+    } else {
+      if (confirm("Esto guardará los cambios actuales")) {
+        if (typeof top.document.AXX == "undefined") {
+          top.document.AXX = {};
+        }
+        top.document.AXX.abrirLineasDePedido = true;
+        Xrm.Page.data.entity.save();
+      }
+    }
+    return;
+  }
+  var serverURL = window.location.protocol + "//" + window.location.hostname;
+  var OrgName = context.getOrgUniqueName();
+  var url = serverURL + "/SalesOrderDetail/" + OrgName + "/salesorderdetail.aspx?";
+  var SalesOrderId  = "SalesOrderId=" + Xrm.Page.data.entity.getId() + "&";
+  var PriceListId   = "PriceListId=" + priceList + "&";
+
+  var PriceListId2;
+  if (altprclst != "") {
+    PriceListId2 = "PriceListId2=" + altprclst + "&";
+  } else {
+    PriceListId2 = "";
+  }
+
+  var SystemUserId  = "SystemUserId=" + context.getUserId() + "&";
+  var CampanaId     = "CampanaId="  + campaign + "&";
+  var TipoPedido    = "TipoPedido="  + Xrm.Page.getAttribute("axx_tipopedido").getValue() + "&";
+  var SubTipoPedido = "SubTipoPedido=" + Xrm.Page.getAttribute("axx_subtipo").getValue();
+
+  url += SalesOrderId + PriceListId + PriceListId2 + SystemUserId + CampanaId + TipoPedido + SubTipoPedido;
+
+  var screenWidth = screen.availWidth;
+  var height = screen.availHeight - 45;
+  var width = screenWidth - 100;
+  var windowPosition = ",top=2,left=" + ((screenWidth - width - 10) / 2);
+  var windowSize = "width=" + width + ",height=" + height;
+  var features = 'menubar=no,resizable=yes,scrollbars=yes,location=no' + windowPosition + ',' + windowSize;
+
+  var ventana = window.open(url, '', features);
+}
+
+function GetAlternativePriceList(SalesOrderId) {
+  var xml, AltPrcLstId, xmlHttpRequest, DOM, Ret;
+  xmlHttpRequest = new ActiveXObject("Msxml2.XMLHTTP");
+  DOM = new ActiveXObject("Msxml2.DOMDocument");
+
+  SalesOrderId = SalesOrderId.replace("{", "").replace("}", "");
+  xml =
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+        "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">" +
+        GenerateAuthenticationHeader() +
+        "  <soap:Body>" +
+        "    <RetrieveMultiple xmlns=\"http://schemas.microsoft.com/crm/2007/WebServices\">" +
+        "      <query xmlns:q1=\"http://schemas.microsoft.com/crm/2006/Query\" xsi:type=\"q1:QueryExpression\">" +
+        "        <q1:EntityName>axx_campana</q1:EntityName>" +
+        "        <q1:ColumnSet xsi:type=\"q1:ColumnSet\">" +
+        "          <q1:Attributes>" +
+        "            <q1:Attribute>axx_listadepreciosalternativa</q1:Attribute>" +
+        "          </q1:Attributes>" +
+        "        </q1:ColumnSet>" +
+        "        <q1:Distinct>false</q1:Distinct>" +
+        "        <q1:LinkEntities>" +
+        "          <q1:LinkEntity>" +
+        "            <q1:LinkFromAttributeName>axx_campanaid</q1:LinkFromAttributeName>" +
+        "            <q1:LinkFromEntityName>axx_campana</q1:LinkFromEntityName>" +
+        "            <q1:LinkToEntityName>salesorder</q1:LinkToEntityName>" +
+        "            <q1:LinkToAttributeName>axx_campanaid</q1:LinkToAttributeName>" +
+        "            <q1:JoinOperator>Natural</q1:JoinOperator>" +
+        "            <q1:LinkCriteria>" +
+        "              <q1:FilterOperator>And</q1:FilterOperator>" +
+        "              <q1:Conditions>" +
+        "                <q1:Condition>" +
+        "                  <q1:AttributeName>salesorderid</q1:AttributeName>" +
+        "                  <q1:Operator>Equal</q1:Operator>" +
+        "                  <q1:Values>" +
+        "                    <q1:Value xmlns:q2=\"http://microsoft.com/wsdl/types/\" xsi:type=\"q2:guid\">" + SalesOrderId + "</q1:Value>" +
+        "                  </q1:Values>" +
+        "                </q1:Condition>" +
+        "              </q1:Conditions>" +
+        "            </q1:LinkCriteria>" +
+        "          </q1:LinkEntity>" +
+        "        </q1:LinkEntities>" +
+        "        <q1:Criteria>" +
+        "          <q1:FilterOperator>And</q1:FilterOperator>" +
+        "          <q1:Conditions>" +
+        "            <q1:Condition>" +
+        "              <q1:AttributeName>axx_cargarfueradeplanificacion</q1:AttributeName>" +
+        "              <q1:Operator>Equal</q1:Operator>" +
+        "              <q1:Values>" +
+        "                <q1:Value xsi:type=\"xsd:boolean\">true</q1:Value>" +
+        "              </q1:Values>" +
+        "            </q1:Condition>" +
+        "          </q1:Conditions>" +
+        "        </q1:Criteria>" +
+        "      </query>" +
+        "    </RetrieveMultiple>" +
+        "  </soap:Body>" +
+        "</soap:Envelope>";
+
+  xmlHttpRequest.Open("POST", "/mscrmservices/2007/CrmService.asmx", false);
+  xmlHttpRequest.setRequestHeader("SOAPAction", "http://schemas.microsoft.com/crm/2007/WebServices/RetrieveMultiple");
+  xmlHttpRequest.setRequestHeader("Content-Type", "text/xml; charset=utf-8");
+  xmlHttpRequest.setRequestHeader("Content-Length", xml.length);
+  xmlHttpRequest.send(xml);
+
+  DOM.loadXML(xmlHttpRequest.responseText);
+
+  AltPrcLstId = DOM.getElementsByTagName("q1:axx_campanaid");
+
+  if (AltPrcLstId.length != 0) {
+    Ret = AltPrcLstId.item(0).text;
+  } else {
+    Ret = "";
+  }
+  return Ret;
+}
+
+function guardarpagoAnterior() {
+  var axx_formadepago =  Xrm.Page.getAttribute("axx_formadepago").getValue();
+  var axx_reintentosdecobro = Xrm.Page.getAttribute("axx_reintentosdecobro").getValue();
+  Xrm.Page.getAttribute("axx_formadepagoanterior").setValue(axx_formadepago);
+  Xrm.Page.getAttribute("axx_reintentosdecobroanterior").setValue(axx_reintentosdecobro);
+}
+
+function reinicioIntentosPagos() {
+  var axx_formadepago =  Xrm.Page.getAttribute("axx_formadepago").getValue();
+  var axx_formadepagoanterior =  Xrm.Page.getAttribute("axx_formadepagoanterior").getValue();
+  var axx_reintentosdecobroanterior = Xrm.Page.getAttribute("axx_reintentosdecobroanterior").getValue();
+  if (lookup2guid(axx_formadepago) != lookup2guid(axx_formadepagoanterior)) { // cambio la forma de pago
+    Xrm.Page.getAttribute("axx_reintentosdecobro").setValue(null);
+  } else { // Si vuelven a elegir la misma, vuelve al valor que tenia
+    Xrm.Page.getAttribute("axx_reintentosdecobro").setValue(axx_reintentosdecobroanterior);
+  }
+}
+
+function abrirLineasDePedido() {
+  var axx = top.document.AXX;
+  if (typeof axx != "undefined") {
+    if (typeof axx.abrirLineasDePedido != undefined && axx.abrirLineasDePedido == true) {
+      axx.abrirLineasDePedido == false;
+      getCustomSalesOrderDetail(true);
+    }
+    axx.abrirLineasDePedido == false;
+  }
+}

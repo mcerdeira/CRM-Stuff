@@ -1,0 +1,181 @@
+// Create Dynamic Button for CRM 5
+function removeChildNodes(ctrl)
+{ 
+	while (ctrl.childNodes[0]) 
+	{ 
+		ctrl.removeChild(ctrl.childNodes[0]); 
+	}
+}
+ 
+function CreateButtonCRM5(fieldName, buttonText, buttonWidth, iconName, clickEvent)
+{
+	functiontocall=clickEvent;
+	crmForm.all.item(fieldName + "_c").style.display = "none";
+ 
+	var li = document.createElement("DIV");
+	li.setAttribute('id', fieldName + 'DIV');
+	li.setAttribute('className', 'ms-crm-Menu');
+	li.setAttribute('title', buttonText);
+	li.setAttribute('onclick', functiontocall);
+	li.setAttribute('onmousedown', push_custom_button);
+	li.setAttribute('onmouseup', release_custom_button);
+	li.style.width=buttonWidth;
+	li.style.cursor="hand";
+	li.style.textAlign="center";
+	li.style.overflow="hidden";
+ 
+	var span = document.createElement("span");
+	span.setAttribute('className', 'ms-crm-Menu-Label');
+	span.setAttribute('id', fieldName + 'Span');
+	span.style.cursor = "hand";
+	li.appendChild(span);
+	li.onmouseover = function() { span.setAttribute('className', 'ms-crm-Menu-Label-Hovered');}
+	li.onmouseout = function() { span.setAttribute('className', 'ms-crm-Menu-Label'); }
+ 
+	var a = document.createElement("a");
+	a.setAttribute('id', fieldName + 'A');
+	a.setAttribute('className', 'ms-crm-Menu-Label');
+	a.onclick = function() { return false; }
+	a.setAttribute('target', '_self');
+	a.setAttribute('href', 'javascript:onclick();');
+	a.style.cursor = "hand";
+	span.appendChild(a);
+ 
+	var img = document.createElement("img");
+	img.setAttribute('id', fieldName + 'Img');
+	img.setAttribute('className', 'ms-crm-Menu-ButtonFirst');
+	img.setAttribute('src', '/_imgs/' + iconName);
+	img.style.cursor = "hand";
+ 
+	var span2 = document.createElement("span");
+	span2.setAttribute('id', fieldName + 'Span2');
+	span2.setAttribute('className', 'ms-crm-MenuItem-TextRTL');
+	span2.innerText = "  " + buttonText;
+	span2.style.cursor = "hand";
+	a.appendChild(img);
+	a.appendChild(span2);
+ 
+	removeChildNodes(crmForm.all.item(fieldName + "_d"));
+	crmForm.all.item(fieldName + "_d").appendChild(li);
+}
+
+
+function push_custom_button()
+{
+	window.event.srcElement.style.marginLeft="1px";
+	window.event.srcElement.style.marginTop="1px";
+}
+ 
+function release_custom_button()
+{
+	window.event.srcElement.style.marginLeft="0px";
+	window.event.srcElement.style.marginTop="0px";
+}
+
+function getBillToAddress(){
+  var Customerfield;
+  var customerType;
+      
+  var Customerfield = "customerid";
+  var customerType =  2;
+      
+  var rAddress = getAddressFromLookup(Customerfield,customerType);
+  
+  if (rAddress != null){
+  
+    Xrm.Page.getAttribute("shipto_name").setValue(rAddress[0].value);
+	Xrm.Page.getAttribute("shipto_line1").setValue(rAddress[2].value);
+	Xrm.Page.getAttribute("axx_shipto_numero").setValue(rAddress[3].value);
+	Xrm.Page.getAttribute("axx_shipto_piso").setValue(rAddress[4].value);
+	Xrm.Page.getAttribute("axx_shipto_departamento").setValue(rAddress[5].value);
+    Xrm.Page.getAttribute("shipto_postalcode").setValue(rAddress[7].value);
+	Xrm.Page.getAttribute("shipto_telephone").setValue(rAddress[6].value);
+    Xrm.Page.getAttribute("shipto_country").setValue(rAddress[8].value);
+	Xrm.Page.getAttribute("shipto_stateorprovince").setValue(rAddress[9].value);
+    Xrm.Page.getAttribute("shipto_city").setValue(rAddress[10].value);
+    Xrm.Page.getAttribute("axx_shipto_localidad").setValue(rAddress[11].value);
+	Xrm.Page.getAttribute("axx_shipto_barrio").setValue(rAddress[12].value);
+	Xrm.Page.getAttribute("axx_shipto_jurisdiccion").setValue(rAddress[13].value);
+
+	Xrm.Page.getAttribute("shipto_name").setSubmitMode("always");
+	Xrm.Page.getAttribute("shipto_line1").setSubmitMode("always");
+	Xrm.Page.getAttribute("axx_shipto_numero").setSubmitMode("always");
+	Xrm.Page.getAttribute("axx_shipto_piso").setSubmitMode("always");
+	Xrm.Page.getAttribute("axx_shipto_departamento").setSubmitMode("always");
+    Xrm.Page.getAttribute("shipto_postalcode").setSubmitMode("always");
+	Xrm.Page.getAttribute("shipto_telephone").setSubmitMode("always");
+    Xrm.Page.getAttribute("shipto_country").setSubmitMode("always");
+	Xrm.Page.getAttribute("shipto_stateorprovince").setSubmitMode("always");
+    Xrm.Page.getAttribute("shipto_city").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shipto_localidad").setSubmitMode("always");
+	Xrm.Page.getAttribute("axx_shipto_barrio").setSubmitMode("always");
+	Xrm.Page.getAttribute("axx_shipto_jurisdiccion").setSubmitMode("always");
+
+	
+    //Xrm.Page.getAttribute("axx_billtocalle1").setValue(rAddress[3].value);
+    //Xrm.Page.getAttribute("axx_billtocalle3").setValue(rAddress[7].value);        
+    //Xrm.Page.getAttribute("axx_billtocalle1").setValue(rAddress[3].value);
+    //Xrm.Page.getAttribute("axx_billtocalle3").setValue(rAddress[7].value);
+    //Xrm.Page.getAttribute("axx_billtocalle2").setValue(rAddress[6].value);
+	
+	}
+}
+
+
+function getAddressFromLookup(Customerfield,customerType) {
+    var retrievedLookupAddress = null;
+    var errorMssg = "Debe seleccionar un cliente antes de buscar direcciones";
+    var orgName = Xrm.Page.context.getOrgUniqueName();
+    var customerValue = Xrm.Page.getAttribute(Customerfield).getValue();
+  
+    if(!customerValue){ alert(errorMssg); return }    
+  
+    var custId = customerValue[0].id;
+
+    
+    var url = '/' + orgName + 
+              '/_controls/lookup/lookupsingle.aspx?class=BrowseCustomerAddress&objecttypes=1071&browse=1&bindingcolumns=line1%2cpostalcode&parentType=' + 
+              customerType + '&parentId=' + custId + '&ShowNewButton=1&ShowPropButton=1&DefaultType=1071';
+
+    var selectedAddress = window.showModalDialog(url, null, 'dialogWidth:600px;dialogHeight:350px;resizable:yes');
+
+    if (selectedAddress != null) {
+        var retrievedLookupAddress = JSON.parse(selectedAddress.items[0].values);
+    }
+    
+    return retrievedLookupAddress;
+}
+
+
+
+function borrarDireccionesOnChange(){
+
+    Xrm.Page.getAttribute("shipto_name").setValue(null);
+	Xrm.Page.getAttribute("shipto_line1").setSubmitMode(null);
+	Xrm.Page.getAttribute("axx_shipto_numero").setValue(null);
+	Xrm.Page.getAttribute("axx_shipto_piso").setValue(null);
+	Xrm.Page.getAttribute("axx_shipto_departamento").setValue(null);
+    Xrm.Page.getAttribute("shipto_postalcode").setValue(null);
+	Xrm.Page.getAttribute("shipto_telephone").setValue(null);
+    Xrm.Page.getAttribute("shipto_country").setValue(null);
+	Xrm.Page.getAttribute("shipto_stateorprovince").setValue(null);
+    Xrm.Page.getAttribute("shipto_city").setValue(null);
+    Xrm.Page.getAttribute("axx_shipto_localidad").setValue(null);
+	Xrm.Page.getAttribute("axx_shipto_barrio").setValue(null);
+	Xrm.Page.getAttribute("axx_shipto_jurisdiccion").setValue(null);
+
+	Xrm.Page.getAttribute("shipto_name").setSubmitMode("always");
+	Xrm.Page.getAttribute("shipto_line1").setSubmitMode("always");
+	Xrm.Page.getAttribute("axx_shipto_numero").setSubmitMode("always");
+	Xrm.Page.getAttribute("axx_shipto_piso").setSubmitMode("always");
+	Xrm.Page.getAttribute("axx_shipto_departamento").setSubmitMode("always");
+    Xrm.Page.getAttribute("shipto_postalcode").setSubmitMode("always");
+	Xrm.Page.getAttribute("shipto_telephone").setSubmitMode("always");
+    Xrm.Page.getAttribute("shipto_country").setSubmitMode("always");
+	Xrm.Page.getAttribute("shipto_stateorprovince").setSubmitMode("always");
+    Xrm.Page.getAttribute("shipto_city").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_shipto_localidad").setSubmitMode("always");
+	Xrm.Page.getAttribute("axx_shipto_barrio").setSubmitMode("always");
+	Xrm.Page.getAttribute("axx_shipto_jurisdiccion").setSubmitMode("always");
+
+}

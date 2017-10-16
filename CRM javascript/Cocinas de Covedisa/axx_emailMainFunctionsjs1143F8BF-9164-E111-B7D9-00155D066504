@@ -1,0 +1,7 @@
+function defaultContacto()
+{
+  document.getElementById("regardingobjectid").setAttribute("defaulttype", "2");
+  document.getElementById("to").setAttribute("defaulttype", "2");
+  document.getElementById("cc").setAttribute("defaulttype", "2");
+  document.getElementById("bcc").setAttribute("defaulttype", "2");
+}

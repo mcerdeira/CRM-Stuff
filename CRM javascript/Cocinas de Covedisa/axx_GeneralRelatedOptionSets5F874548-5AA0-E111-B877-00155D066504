@@ -1,0 +1,267 @@
+function RltOS_OnLoad(webResourceName)
+{
+ var Rels;
+ var StrFields;
+ var ArrFields;
+ var Idx;
+ var formType;
+ var serverURL;
+ var pathToWR;
+ 
+ formType = Xrm.Page.ui.getFormType();
+
+ if (formType == 1 || formType == 2)
+ {
+  RltOS_DOM = new ActiveXObject("Msxml2.DOMDocument");
+  RltOS_IsFormOnLoad = true;
+
+  RltOS_DOM.async = false;
+  
+  serverURL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port;
+  pathToWR = serverURL + "/" + Xrm.Page.context.getOrgUniqueName()  + "/WebResources/" + webResourceName;
+
+  RltOS_DOM.load(pathToWR);
+
+  Rels = RltOS_DOM.selectNodes("//RelatedOptionSets/Relations");
+
+  StrFields = "";
+
+  if (Rels.length > 0)
+  {
+   if (Rels.item(0).hasChildNodes)
+     StrFields = RltOS_GetFieldsFromXML(Rels.item(0).childNodes, StrFields);
+  }
+
+  if(StrFields.length > 1)
+  {
+   StrFields = StrFields.substr(0, StrFields.length-1);
+   StrFields = StrFields.substr(1, StrFields.length-1);
+   ArrFields = StrFields.split(";");
+
+   for(Idx in ArrFields)
+     Xrm.Page.getAttribute(ArrFields[Idx].replace("*","")).addOnChange(RltOS_FieldChange);
+
+   for(Idx in ArrFields)
+   {
+     if(ArrFields[Idx].substr(0,1) == "*")
+       Xrm.Page.getAttribute(ArrFields[Idx].replace("*","")).fireOnChange();
+   }
+
+   RltOS_IsFormOnLoad = false;
+  }
+ }
+}
+
+function RltOS_GetFieldsFromXML(Nodes, ActualFields)
+{
+ var Idx;
+ var StrData;
+ var NodeName;
+ var AttrKey;
+
+ if(ActualFields == "")
+   StrData = ";";
+ else
+   StrData = "";
+
+ for (Idx = 0; Idx < Nodes.length; Idx++)
+ {
+   NodeName = Nodes.item(Idx).baseName;
+   AttrKey = Nodes.item(Idx).attributes.getNamedItem("key");
+
+   if (NodeName != "" && AttrKey != null && AttrKey.text != "")
+   {
+     if (ActualFields.toString().replace("*","").indexOf(";" + NodeName + ";") == -1)
+     {
+       if(Nodes.item(Idx).parentNode.baseName == "Relations")
+        StrData += "*";
+
+       StrData += NodeName + ";";
+       if (Nodes.item(Idx).hasChildNodes)
+         StrData += RltOS_GetFieldsFromXML(Nodes.item(Idx).childNodes, ActualFields + StrData);
+     }
+     else
+       Nodes.item(Idx).parentNode.removeChild(Nodes.item(Idx));
+   }
+   else
+     Nodes.item(Idx).parentNode.removeChild(Nodes.item(Idx));
+ }
+
+ return StrData;
+}
+
+function RltOS_FieldChange(context)
+{
+ var FieldName;
+ var IsFormEdit;
+ var Key;
+ var TKey;
+ var Nodes;
+ var Node;
+ var FNodes;
+ var DFieldName;
+ var OpLst = new Array();
+ var FireOnChgFlds = new Array();
+ var Idx;
+ var IdxFld;
+ var AttrId;
+ var AttrKey;
+ var AttrOSKey;
+ var FireOnChgFieldName;
+ var FireOnChgFieldValue;
+
+ FieldName = context.getEventSource().getName();
+
+ if (Xrm.Page.ui.getFormType() == 2)
+   IsFormEdit = true;
+ else
+   IsFormEdit = false;
+
+ Nodes = RltOS_DOM.getElementsByTagName(FieldName);
+
+ if (Nodes.length > 0)
+ {
+  //Inicio Armar Key
+  Key = Nodes.item(0).attributes.getNamedItem("key").text;
+  Key += (Xrm.Page.getAttribute(FieldName).getValue() == null?"null":Xrm.Page.getAttribute(FieldName).getValue());
+
+  Node = Nodes.item(0).parentNode;
+
+  while (Node != null && Node.baseName != "Relations")
+  {
+   TKey = Node.attributes.getNamedItem("key").text;
+   TKey += (Xrm.Page.getAttribute(Node.baseName).getValue() == null?"null":Xrm.Page.getAttribute(Node.baseName).getValue());
+   Key = TKey + Key;
+
+   Node = Node.parentNode;
+  }
+  //Fin Armar Key
+
+  //Inicio buscar OptionSets dependientes
+  Nodes = RltOS_DOM.getElementsByTagName(FieldName);
+
+  if (Nodes.item(0).hasChildNodes)
+    Nodes = Nodes.item(0).childNodes;
+  else
+    Nodes = null;
+  //Fin buscar OptionSets dependientes
+
+  //Buscar las opciones a filtrar.
+  FNodes = RltOS_DOM.getElementsByTagName(Key);
+
+  if (FNodes.length > 0)
+  {
+   if (FNodes.item(0).hasChildNodes && Nodes != null)
+   {
+    FNodes = FNodes.item(0).childNodes;
+
+    for(IdxFld = 0; IdxFld < Nodes.length; IdxFld++) //Recorrer los OptionSets dependientes del actual.
+    {
+     OpLst = new Array();
+
+     AttrKey = Nodes.item(IdxFld).attributes.getNamedItem("key");
+     if(AttrKey != null && AttrKey.text != "")
+     {
+      DFieldName = Nodes.item(IdxFld).baseName;
+
+      if (IsFormEdit && RltOS_IsFormOnLoad) //Si el formulario se está cargando y está editando un registro existente.
+        OpLst.push((Xrm.Page.getAttribute(FieldName).getValue() == null?"null":Xrm.Page.getAttribute(FieldName).getValue()));
+
+      for (Idx = 0; Idx < FNodes.length; Idx++) //Recorrer las opciones que se deben filtrar.
+      {
+       AttrId = FNodes.item(Idx).attributes.getNamedItem("id");
+       AttrOSKey = FNodes.item(Idx).attributes.getNamedItem("oskey");
+       if (AttrId != null && AttrId.text != "" && AttrOSKey != null && AttrOSKey.text != "")
+       {
+        if(AttrOSKey.text == AttrKey.text)
+          OpLst.push(AttrId.text);
+       }
+      }
+
+      Xrm.Page.getControl(DFieldName).setDisabled(false);
+      FilterOptionSet(DFieldName, OpLst);
+      if (OpLst.length > 0)
+        FireOnChgFlds.push(DFieldName + ";" + OpLst[0]);
+      else
+        FireOnChgFlds.push(DFieldName + ";null");
+     }
+    }
+
+    //Ejecutar OnChange de los OptionSet filtrados.
+    for (Idx in FireOnChgFlds)
+    {
+     FireOnChgFieldName = FireOnChgFlds[Idx].split(";")[0];
+     FireOnChgFieldValue = FireOnChgFlds[Idx].split(";")[1];
+
+     if (FireOnChgFieldValue == "null")
+       Xrm.Page.getAttribute(FireOnChgFieldName).setValue(null);
+     else
+       Xrm.Page.getAttribute(FireOnChgFieldName).setValue(FireOnChgFieldValue);
+
+     Xrm.Page.getAttribute(FireOnChgFieldName).fireOnChange();
+    }
+   }
+   else
+   {
+    if (Nodes != null)
+      DeactivateRelatedOptionSet(Nodes);
+   }
+  }
+  else
+  {
+   if (Nodes != null)
+     DeactivateRelatedOptionSet(Nodes);
+  }
+ }
+}
+
+function DeactivateRelatedOptionSet(Nodes)
+{
+ var Idx;
+ var FieldName;
+ 
+ for (Idx = 0; Idx < Nodes.length; Idx++)
+ {
+  FieldName = Nodes.item(Idx).baseName;
+  Xrm.Page.getAttribute(FieldName).setValue(null);
+  Xrm.Page.getControl(FieldName).setDisabled(true);
+  Xrm.Page.getAttribute(FieldName).setSubmitMode("always");
+  
+  if (Nodes.item(Idx).hasChildNodes)
+    DeactivateRelatedOptionSet(Nodes.item(Idx).childNodes);
+ }
+}
+
+function FilterOptionSet(field, inArray)
+{
+ //Pasar por parametro el nombre del campo y las opciones a dejar en el orden que se desea que aparezcan.
+
+ var optionArr = new Array();
+ var optionsetControl = Xrm.Page.ui.controls.get(field);
+ var option;
+ var currentValue = Xrm.Page.getAttribute(field).getValue();
+
+ //Guardar las opciones a mantener en un array temporal.
+ for (i = 0; i < inArray.length; i++){
+   if (inArray[i] != "null")
+   {
+    option = optionsetControl.getAttribute(field).getOption(inArray[i]);
+    optionArr.push(option);
+   }
+ }
+
+ //Borrar todas las opciones.
+ optionsetControl.clearOptions();
+
+ //Agregar las opciones guardadas.
+ var addCurrentOption = ( currentValue != null && !isNaN(currentValue) ) ? true : false;
+
+ for (f = 0; f < optionArr.length; f++){
+   optionsetControl.addOption(optionArr[f]);
+   if (optionArr[f].value == currentValue){
+     addCurrentOption = false;
+   }
+ }
+
+ Xrm.Page.getAttribute(field).setValue(currentValue);
+}

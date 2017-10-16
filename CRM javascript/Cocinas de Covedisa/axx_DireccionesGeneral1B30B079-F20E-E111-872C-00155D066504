@@ -1,0 +1,4 @@
+function NombreCategoria() 
+{
+ Xrm.Page.getAttribute("name").setValue(Xrm.Page.getAttribute("axx_categoriadedireccion").getText());
+}

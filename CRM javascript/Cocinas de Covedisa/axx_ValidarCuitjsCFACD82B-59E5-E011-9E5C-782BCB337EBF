@@ -1,0 +1,239 @@
+/*Agregar en el OnChange*/
+function validarDocumentoOnChange(eobj){
+  var fieldDocumento = "axx_nrodocumento";
+  var nroDoc = Xrm.Page.getAttribute(fieldDocumento).getValue();
+
+  ExecutionObj = eobj; // Global con el contexto de ejecucion
+  
+  if (nroDoc != null) {
+    var tipoDoc = Xrm.Page.getAttribute("axx_tipodocumento").getValue();
+    var minDNI = 0;
+    var maxDNI = 100000000;
+    
+    switch(tipoDoc){
+      case 80: //Cuit
+        onChangeCuit(fieldDocumento);
+      break;
+      
+      case 86: //Cuil
+        onChangeCuit(fieldDocumento);
+      break;
+      
+      case 87: //CDI
+        onChangeDNI(fieldDocumento, minDNI, maxDNI);
+      break;
+      
+      case 89: //LE
+        onChangeDNI(fieldDocumento, minDNI, maxDNI);
+      break;
+      
+      case 90: //LC
+        onChangeDNI(fieldDocumento, minDNI, maxDNI);
+      break;
+      
+      case 96: //DNI
+        onChangeDNI(fieldDocumento, minDNI, maxDNI);
+      break;
+      
+      case 94: //Pasaporte
+        onChangeDNI(fieldDocumento, minDNI, maxDNI);
+      break;
+      
+      case  0: //CI Policia Federal
+        onChangeDNI(fieldDocumento, minDNI, maxDNI);
+      break;
+      
+      case  1: //CI Buenos Aires
+        onChangeDNI(fieldDocumento, minDNI, maxDNI);
+      break;
+      
+      case  2: //C.I. CATAMARCA
+        onChangeDNI(fieldDocumento, minDNI, maxDNI);
+      break;
+      
+      default: //Nuevo Tipo no contemplado.
+      break;
+    }
+  }
+}
+
+function onChangeCuit(fieldNameString){
+
+  var oField = Xrm.Page.getAttribute(fieldNameString);
+  var invalidValue = null; 
+  
+  // Validate the field information.
+  if (typeof(oField) != "undefined" && oField != null)
+  {
+  // Remove any nonnumeric characters.
+    var sTmp = oField.getValue().replace(/[^0-9]/g, "");
+
+  // If the number has a valid length, format the number.
+    if (sTmp.length == 11){
+        sTmp = sTmp.substr(0, 2) + "-" + sTmp.substr(2, 8) + "-" + sTmp.substr(10, 1);
+        
+        if (esValido(sTmp)){
+            oField.setValue(sTmp);
+        }else{
+            alert("CUIT Inválido");
+            if(ExecutionObj != undefined){
+                ExecutionObj.getEventArgs().preventDefault();
+            }
+            //oField.setValue(invalidValue);
+        }
+    }else{
+        alert("CUIT Inválido");
+            if(ExecutionObj != undefined){
+                ExecutionObj.getEventArgs().preventDefault();
+            }
+        //oField.setValue(invalidValue);
+    }
+  }
+}
+
+function esValido(cuit){
+  var Pos = 10;
+  var Mult = 2;
+  var Acum = 0;
+  var iNum;
+
+    if(cuit.match(/^\d{2}\-\d{8}\-\d{1}$/)) {     
+     while (Pos >= 0){
+      if ( cuit.charAt(Pos) != "-" ) {
+          Acum = Acum + ( cuit.charAt(Pos) * Mult );
+          if ( Mult > 6 ){
+            Mult = 2;
+          }else{
+            Mult = Mult + 1;
+          }
+      }
+      Pos = Pos - 1;
+    }
+      iNum = 11 - ( Acum % 11 );
+      
+    switch(iNum){
+      case 11: iNum = 0;
+      break;
+      case 10: iNum = 9;
+      break;
+    }
+  }
+  
+  return iNum == cuit.charAt(12);
+}
+
+
+function onChangeDNI(fieldNameString, iMin, iMax){
+
+  var oField = Xrm.Page.getAttribute(fieldNameString);
+  var invalidValue = null; 
+  var newValue;
+  
+  // Validate the field information.
+  if (typeof(oField) != "undefined" && oField != null)
+  {
+  // Remove any nonnumeric characters.
+    var sTmp = oField.getValue().replace(/[^0-9]/g, "");
+
+  // If the number has a valid length, format the number.
+    iTmp = parseInt(sTmp, 10);
+    
+    if (!isNaN(iTmp) && iTmp > iMin && iTmp < iMax){
+      newValue = FormatNumberBy3(iTmp, null, null, null, ".");
+      oField.setValue(newValue);
+    }else{
+      //newValue = invalidValue;
+      if(ExecutionObj != undefined){
+          ExecutionObj.getEventArgs().preventDefault();
+      }
+    }    
+  }
+}
+
+
+/*
+Author: Robert Hashemian
+http://www.hashemian.com/
+Modified by: Iván Garbus
+
+Changes: 
+********
+01/03/2011 - Required for the exact number of parameters.
+01/03/2011 - Added the ability to specify different source and destination characters
+
+
+You can use this code in any manner so long as the author's
+name, Web address and this disclaimer is kept intact.
+********************************************************
+Usage Sample:
+
+<script language="JavaScript" src="http://www.hashemian.com/js/NumberFormat.js"></script>
+<script language="JavaScript">
+document.write(FormatNumberBy3("1234512345.12345", ".", ",", ",", "."));
+</script>
+*/
+
+// function to format a number with separators. returns formatted number.
+// num - the number to be formatted
+// sourceDecPoint - the source decimal point character.
+// sourceSep - the source separator character.
+// destDecPoint - the destination decimal point character.
+// destSep - the destination separator character.
+
+function FormatNumberBy3(num, sourceDecPoint, sourceSep, destDecPoint, destSep) {
+  // check for missing parameters
+  if (arguments.length != 5) {
+    alert("FormatNumberBy3: Numero incorrecto de parametros");
+	return
+  }
+  // need a string for operations
+  num = num.toString();
+  
+  // separate the whole number and the fraction if possible
+  a = num.replace(sourceSep, "");
+  a = a.split(sourceDecPoint);
+  x = a[0]; // decimal
+  y = a[1]; // fraction
+  z = "";
+
+
+  if (typeof(x) != "undefined") {
+    // reverse the digits. regexp works from left to right.
+    for (i=x.length-1;i>=0;i--)
+      z += x.charAt(i);
+    // add seperators. but undo the trailing one, if there
+    z = z.replace(/(\d{3})/g, "$1" + destSep);
+    if (z.slice(-destSep.length) == destSep)
+      z = z.slice(0, -destSep.length);
+    x = "";
+    // reverse again to get back the number
+    for (i=z.length-1;i>=0;i--)
+      x += z.charAt(i);
+    // add the fraction back in, if it was there
+    if (typeof(y) != "undefined" && y.length > 0)
+      x += destDecPoint + y;
+  }
+  return x;
+}
+
+function requestCUIT(onChangeTipo){
+  var ci = Xrm.Page.getAttribute("axx_condicioniva").getValue();
+  //Consumidor Final=1; Exento=2; Exterior (para Tierra del fuego)=3; Responsable Inscripto=4; Monotributista=5;Responsable Facturas M=6;
+  var exento = (ci == "2") || (ci == "3") || (ci == "4");
+  
+  var td = Xrm.Page.getAttribute("axx_tipodocumento").getValue();
+  //C.U.I.T.: 80; C.U.I.L.:86; C.D.I.:87; LE: 89; LC: 90; DNI: 96; Pasaporte: 94; CI Policia Federal: 0; CI Bs As: 1; CI Catamarca: 2;
+  esCUILoCUIT = (td == "80" ) || ( td == "86" );
+
+  if(exento && !esCUILoCUIT){
+    Xrm.Page.getAttribute("axx_tipodocumento").setValue(80);
+    Xrm.Page.getAttribute("axx_tipodocumento").fireOnChange();
+    if(onChangeTipo){
+      alert("Solo puede ingresar CUIT o CUIL como tipo de documento " + 
+            "si la condición de IVA del cliente esta dentro de esta lista:\n\n" + 
+            "- Exento \n" + 
+            "- Resposable Inscripto \n" + 
+            "- Exterior (para Tierra del fuego)");
+    }
+  }
+}

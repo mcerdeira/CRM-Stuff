@@ -1,0 +1,8 @@
+function completarNombre(){
+  var cuenta = Xrm.Page.getAttribute("axx_cuenta").getValue();
+  var esquema = Xrm.Page.getAttribute("axx_esquemadesuscripcion").getValue();
+
+  if(cuenta && cuenta[0] && esquema && esquema[0]){
+    Xrm.Page.getAttribute("axx_name").setValue(cuenta[0].name + " - " + esquema[0].name);
+  }
+}

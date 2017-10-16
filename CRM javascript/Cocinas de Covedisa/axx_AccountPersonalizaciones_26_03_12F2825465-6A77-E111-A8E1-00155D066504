@@ -1,0 +1,30 @@
+function controlarFranquiciado()
+{
+	var clasificacion = Xrm.Page.getAttribute("accountclassificationcode").getValue();
+	
+	if(clasificacion == 2)
+	{
+		Xrm.Page.getControl("axx_franquiciadoid").setVisible(true);
+	}
+	else
+	{
+		Xrm.Page.getControl("axx_franquiciadoid").setVisible(false);
+	}
+}
+
+
+function controlCUIT()
+{
+	var clasificacion = Xrm.Page.getAttribute("accountclassificationcode").getValue();
+
+	if(clasificacion == 2 || Xrm.Page.getAttribute("parentaccountid").getValue() != null)
+	{
+		//cambia el CUIT a NO requerido
+		Xrm.Page.getAttribute("axx_nrodocumento").setRequiredLevel("none");
+	}
+	else
+	{
+		//cambia el CUIT a Requiero
+		Xrm.Page.getAttribute("axx_nrodocumento").setRequiredLevel("required");
+	}
+}

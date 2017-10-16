@@ -1,0 +1,531 @@
+function FormOnLoadWSck()
+{
+ var Message;
+ var GetDataObj;
+
+ WSockOk = true;
+ TimeOutId = 0;
+
+ try
+ {
+  GetDataObj = new ActiveXObject('WSockGetData.GetData'); //Para comprobar que el objeto exista y se pueda instanciar.
+  WSock = new ActiveXObject('MSWinSock.WinSock');
+  WSock.Protocol = 1; //UDP
+  WSock.RemoteHost = '127.0.0.1';
+  WSock.RemotePort = 8544;
+  GetDataObj = null;
+ }
+ catch(Err)
+ {
+  Message = 'Error al intentar utilizar WinSock, la comunicación con IPPad está desactivada: [%1] %2';
+  Message = Message.replace('%1', Err.number);
+  Message = Message.replace('%2', Err.description);
+ 
+  CRMMessage(Message, 'c', true);
+  WSockOk = false;
+ }
+ 
+ //Actualizar la URL en la base de Mitrol.
+ CheckAndUpdateMitrolCRMURL();
+}
+
+function FormOnSaveWSck()
+{
+ var PhoneNumber;
+ var CatId;
+ var SubCatId;
+ 
+ if (Xrm.Page.getAttribute("phonenumber").getValue() == null){ // Voy a buscar el telefono, solo si esta vacio 
+     //Actualizar número de teléfono (se obtiene de IPPad).
+     PhoneNumber = GetPhoneNumberFromIPPad(); 
+     if (PhoneNumber != ''){
+         Xrm.Page.getAttribute('phonenumber').setValue(PhoneNumber);
+     }
+ }
+
+ //Enviar resultado de gestión (Categoría).
+ CatId = Xrm.Page.getAttribute('axx_categoria').getValue();
+ 
+ if(CatId != null)
+ {
+  if(parseInt(CatId) < 100000)
+    SendManagementResultToIPPad(CatId);
+  else
+  {
+   SubCatId = Xrm.Page.getAttribute('axx_subcategoria').getValue();
+   if(SubCatId != null)
+     SendManagementResultToIPPad(SubCatId);
+  }
+ }
+
+
+ //Enviar el IdCRM a IPPad.
+ SetIdCRM();
+
+
+ //Pasar a disponible.
+ IPPadChangeStatusToAvailable();
+}
+
+function IPPadCall(PhoneNum)
+{
+ var Cmd;
+ var MsgOk;
+ var MsgErr;
+
+ if(PhoneNum != null)
+  PhoneNum = PhoneNum.replace(/[^\d]/g, "");
+
+ if(PhoneNum == null || PhoneNum == '')
+ {
+  clearTimeout(TimeOutId);
+  CRMMessage('El número de teléfono es incorrecto.', 'w', true);
+  TimeOutId = setTimeout("CRMMessage('', '', false);",5000);
+ }
+ else
+ {
+  Cmd = 'cmd=7400&dnis=9' + PhoneNum + '&';
+  MsgOk = 'Petición de llamado al ' + PhoneNum + ' enviada.';
+  MsgErr = 'Se produjo un error al intentar realizar la llamada';
+  
+  SendOneWayCommandToIPPad(Cmd, MsgOk, MsgErr, false);
+ }
+}
+
+function GetPhoneNumberFromIPPad()
+{
+ var PhoneNumber;
+ var Cmd;
+ var WSockResponse = '';
+ var Message;
+ var StartTime;
+ var TimeOutMS = 5000; //5000 milisegundos (5 segundos).
+ var TimeOutFlg = false;
+ var Ret = '';
+ 
+ if(WSockOk)
+ {
+  try
+  {
+   GetDataObj = new ActiveXObject('WSockGetData.GetData');
+
+   Cmd = 'cmd=7272&nombre=dnis&linea=0&';
+
+   WSock.SendData(Cmd);
+
+   if(WSock.BytesReceived != 0)
+     WSockResponse = GetDataObj.GetData(WSock);
+
+   StartTime = new Date().getTime();
+
+   while (WSockResponse.substr(0,8) != 'cmd=7273')
+   {
+    if((new Date().getTime() - StartTime) >= TimeOutMS)
+    {
+      TimeOutFlg = true;
+      break;
+    }
+
+    if(WSock.BytesReceived != 0)
+      WSockResponse = GetDataObj.GetData(WSock);
+   }
+
+   if(!TimeOutFlg)
+   {
+    PhoneNumber = (((WSockResponse.split('&'))[2]).split('='))[1];
+
+    if(PhoneNumber.substr(0,1) == '9')
+      PhoneNumber = PhoneNumber.substr(1,PhoneNumber.length-1);
+ 
+    Ret = PhoneNumber;
+   }
+   else
+   {
+    Message = 'No se pudo obtener el último número de teléfono del IPPad. Tiempo de espera agotado.';
+    clearTimeout(TimeOutId);
+    CRMMessage(Message, 'w', true);
+    TimeOutId = setTimeout("CRMMessage('', '', false);",5000);
+   }
+
+   GetDataObj = null
+  }
+  catch(Err)
+  {
+   Message = 'No se pudo obtener el último número de teléfono del IPPad. Error %1: %2';
+   Message = Message.replace('%1', Err.number);
+   Message = Message.replace('%2', Err.description);
+   clearTimeout(TimeOutId);
+   CRMMessage(Message, 'w', true);
+   TimeOutId = setTimeout("CRMMessage('', '', false);",5000);
+  }
+ }
+ 
+ return Ret;
+}
+
+function GetIdTaskFromIPPad()
+{
+ var Cmd;
+ var WSockResponse = '';
+ var Message;
+ var StartTime;
+ var TimeOutMS = 5000; //5000 milisegundos (5 segundos).
+ var TimeOutFlg = false;
+ var Ret = '';
+ 
+ if(WSockOk)
+ {
+  try
+  {
+   GetDataObj = new ActiveXObject('WSockGetData.GetData');
+
+   Cmd = 'cmd=7272&nombre=idTarea&linea=0&';
+
+   WSock.SendData(Cmd);
+
+   if(WSock.BytesReceived != 0)
+     WSockResponse = GetDataObj.GetData(WSock);
+
+   StartTime = new Date().getTime();
+  
+   while (WSockResponse.substr(0,8) != 'cmd=7273')
+   {
+    if((new Date().getTime() - StartTime) >= TimeOutMS)
+    {
+      TimeOutFlg = true;
+      break;
+    }
+
+    if(WSock.BytesReceived != 0)
+      WSockResponse = GetDataObj.GetData(WSock);
+   }
+
+   if(!TimeOutFlg)
+    Ret = (((WSockResponse.split('&'))[2]).split('='))[1];
+
+   GetDataObj = null
+  }
+  catch(Err)
+  {
+  }
+ }
+ 
+ return Ret;
+}
+
+function IPPadChangeStatusToAvailable()
+{
+ var Cmd = 'cmd=7240&';
+ 
+ SendOneWayCommandToIPPad(Cmd, '', '', true);
+}
+
+function ScheduleActualIPPadPhoneCall()
+{
+ var Cmd;
+ var IdTask;
+ var MsgOk = 'Petición de agendado de llamada enviada.';
+ var MsgErr = 'Se produjo un error al enviar la petición de agendado de llamada';
+
+ IdTask = GetIdTaskFromIPPad();
+ 
+ if(IdTask != '')
+ {
+  Cmd = 'cmd=6300&idTarea=' + IdTask + '&';
+  SendOneWayCommandToIPPad(Cmd, MsgOk, MsgErr, false);
+ }
+ else
+ {
+  MsgErr = 'No se pudo agendar el número, IPPad no devolvió un número de \'idTarea\'.';
+  clearTimeout(TimeOutId);
+  CRMMessage(MsgErr, 'w', true);
+  TimeOutId = setTimeout("CRMMessage('', '', false);",5000);
+ }
+}
+
+function ReScheduleActualIPPadPhoneCall(Minutes)
+{
+ var Cmd = 'cmd=7270&tiemporellamada=' + parseInt(Minutes) + '&linea=0&';
+ var MsgOk = 'Petición de reprogramación de llamada enviada.';
+ var MsgErr = 'Se produjo un error al enviar la petición de reprogramación de llamada';
+ 
+ SendOneWayCommandToIPPad(Cmd, MsgOk, MsgErr, false);
+}
+
+function SendManagementResultToIPPad(IdResult)
+{
+ var Cmd = 'cmd=7270&resultadogestion=' + IdResult + '&linea=0&';
+ var MsgOk = 'Envío de resultado de gestión realizado.';
+ var MsgErr = 'Se produjo un error al enviar el resultado de gestión';
+ 
+ SendOneWayCommandToIPPad(Cmd, MsgOk, MsgErr, true);
+}
+
+function SetIdCRMToIPPadPhoneCall(IdCRM)
+{
+ var Cmd = 'cmd=7270&idcrm=' + IdCRM + '&linea=0&';
+ 
+ SendOneWayCommandToIPPad(Cmd, '', '', true);
+}
+
+function SendOneWayCommandToIPPad(Cmd, MsgOk, MsgErr, NoAlert)
+{
+ var Message;
+ 
+ if(WSockOk)
+ {
+  try
+  {
+   clearTimeout(TimeOutId);
+   CRMMessage('', '', false);
+
+   WSock.SendData(Cmd);
+
+   if(MsgOk != '')
+   {
+    CRMMessage(MsgOk, 'i', true);
+    TimeOutId = setTimeout("CRMMessage('', '', false);",5000);
+   }
+  }
+  catch(Err)
+  {
+   if(MsgErr != '')
+   {
+    Message = MsgErr + ': [%1] %2';
+    Message = Message.replace('%1', Err.number);
+    Message = Message.replace('%2', Err.description);
+
+    clearTimeout(TimeOutId);
+    CRMMessage(Message, 'c', true);
+    TimeOutId = setTimeout("CRMMessage('', '', false);",10000);
+   }
+  }
+ }
+ else
+ {
+  if(!NoAlert)
+  {
+   Message = 'La comunicación con IPPad está desactivada por\n';
+   Message += 'un error al abrir el formulario.\n\n';
+   Message += 'Vea el detalle en la barra de notificaciones.';
+
+   alert(Message);
+  }
+ }
+}
+
+function CRMMessage(Message, Type, Show)
+{
+ var notificationsArea = document.getElementById('crmNotifications');
+
+ if(Show)
+ {
+  if(notificationsArea == null)
+   alert(Message);
+  else
+  {
+   switch (Type)
+   {
+    case 'W':
+    case 'w':
+      notificationsArea.AddNotification('mep2', 2, 'source', Message); //Warning.
+      break;
+    case 'I':
+    case 'i':
+      notificationsArea.AddNotification('mep3', 3, 'source', Message); //Info.
+      break;
+    case 'C':
+    case 'c':
+      notificationsArea.AddNotification('mep1', 1, 'source', Message); //Critical.
+      break;
+   }
+  }
+ }
+ else
+ {
+  if(notificationsArea != null)
+    notificationsArea.SetNotifications(null, null);
+ }
+}
+
+function ReSchedulePhoneCall()
+{
+ var SchEnd;
+ var NowDate;
+ var ScheduleMinutes;
+ 
+ SchEnd = Xrm.Page.getAttribute('scheduledend').getValue();
+ NowDate = new Date();
+ 
+ ScheduleMinutes = SchEnd.valueOf() - NowDate.valueOf();
+ 
+ ScheduleMinutes = Math.ceil(ScheduleMinutes/60000);
+ 
+ if(ScheduleMinutes < 0)
+ {
+  clearTimeout(TimeOutId);
+  CRMMessage('La fecha/hora de reprogramación del llamado debe ser mayor a la fecha/hora actual.', 'w', true);
+  TimeOutId = setTimeout("CRMMessage('', '', false);",5000);
+ }
+ else
+   ReScheduleActualIPPadPhoneCall(ScheduleMinutes);
+}
+
+function SetIdCRM()
+{
+ var eId;
+ var eTypeName;
+ var Ctrl;
+ var organizationName;
+ var serverURL;
+ var odataSelect;
+ var Result;
+ var Ret;
+
+ Ctrl = Xrm.Page.getAttribute('to');
+ 
+ if(Ctrl.getValue() != null)
+ {
+  eId = (Ctrl.getValue()[0].id).replace('{','').replace('}','');
+  eTypeName = Ctrl.getValue()[0].typename;
+  eTypeName = eTypeName.charAt(0).toUpperCase() + eTypeName.slice(1);
+
+  if(eTypeName == 'Contact' || eTypeName == 'Account')
+  {
+   organizationName = Xrm.Page.context.getOrgUniqueName();
+   serverURL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/" + organizationName;
+   
+   odataSelect = serverURL + "/xrmservices/2011/OrganizationData.svc/" + eTypeName + "Set?";
+   odataSelect += "$select=" + ((eTypeName == 'Contact') ? "new_ID" : "AccountNumber") + '&';
+   odataSelect += "$filter=" + eTypeName + "Id eq guid'" + eId + "'";
+
+   $.ajax({
+           type: "GET",
+           contentType: "application/json; charset=utf-8",
+           datatype: "json",
+           url: odataSelect,
+           beforeSend: function (XMLHttpRequest) { XMLHttpRequest.setRequestHeader("Accept", "application/json"); },
+           success: function (data, textStatus, XmlHttpRequest)
+                    {
+                     if(data.d.results.length != 0)
+                     {
+                      Result = data.d.results[0];
+                      Ret = ((eTypeName == 'Contact') ? Result.new_ID : Result.AccountNumber);
+                      SetIdCRMToIPPadPhoneCall(Ret);
+                     }
+                    },
+       
+           error: function (XmlHttpRequest, textStatus, errorThrown) {}
+          }); 
+  }
+ }
+}
+
+function CheckAndUpdateMitrolCRMURL()
+{
+ var idTask;
+ var CRMURL;
+ var Params;
+ var ClearParams;
+ 
+ if(Xrm.Page.ui.getFormType() != 1) //Si no es un formulario de creación.
+ {
+  idTask = GetIdTaskFromIPPad();
+
+  if(idTask != '')
+  {
+   Params = 'id,axx_campana,axx_campananame,axx_listademarketing,axx_listademarketingname,directioncode,phonenumber,partyid,partyname,partytype';
+   ClearParams = 'id';
+
+   CRMURL = GetURLForMitrolUpdate(Params, ClearParams); //Obtengo la URL ya modificada para actualizar en la base de Mitrol.
+
+   if(CRMURL != '') //La URL actual fue enviada por Mitrol.
+    UpdateMitrolCRMURL(idTask, 'extraqs', CRMURL); //Actualizar la URL en la base de Mitrol.
+  }
+ }
+}
+
+function GetURLForMitrolUpdate(Params, ClearParams)
+{
+ var QSParams = new Array();
+ var QSClearParams = new Array();
+ var QS = new Array();
+ var Ret;
+ var IdxQS;
+ var IdxQSParams;
+ var ParamCount;
+
+ Ret = '';
+ ParamCount = 0;
+
+ QSParams = Params.split(',');
+ QSClearParams = ClearParams.split(',');
+ QS = (window.location.search.substring(1)).split('&');
+
+ for(IdxQSParams in QSParams)
+ {
+  for(IdxQS in QS)
+  {
+   if(QSParams[IdxQSParams] == QS[IdxQS].substr(0, QSParams[IdxQSParams].length))
+   {
+    ParamCount++;
+
+    if(SearchInArray(QSClearParams, QSParams[IdxQSParams]) != -1)
+      Ret += '&' + QSParams[IdxQSParams] + '=';
+    else
+      Ret += '&' + QS[IdxQS];
+
+    break;
+   }
+  }
+ }
+ 
+ if(ParamCount != QSParams.length)
+   Ret = '';
+
+ return Ret;
+}
+
+function SearchInArray(Arr, Data)
+{
+ var Ret = -1;
+ var Idx;
+
+ for(Idx in Arr)
+ {
+  if(Arr[Idx] == Data)
+  {
+   Ret = Idx;
+   break;
+  }
+ }
+
+ return Ret;
+}
+
+function UpdateMitrolCRMURL(idTask, ParamName, Data)
+{
+ var XML;
+ var xmlHttpRequest;
+ 
+ xmlHttpRequest = new ActiveXObject('Msxml2.XMLHTTP');
+ 
+ XML = '<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:mit="http://mitrol.ws/mitct">' +
+ '   <soap:Header/>' +
+ '   <soap:Body>' +
+ '      <mit:ActualizarParametroTareaEntrada>' +
+ '         <mit:idTarea>' + idTask + '</mit:idTarea>' +
+ '         <mit:nombre>' + ParamName + '</mit:nombre>' +
+ '         <mit:valor><![CDATA[' + Data + ']]></mit:valor>' +
+ '      </mit:ActualizarParametroTareaEntrada>' +
+ '   </soap:Body>' +
+ '</soap:Envelope>';
+ 
+ xmlHttpRequest.Open('POST', 'http://192.168.1.70/mitctws/tareas.asmx', true); //Asincrónico.
+ xmlHttpRequest.setRequestHeader('SOAPAction','http://mitrol.ws/mitct/TareasSoap/ActualizarParametroTareaEntradaRequest');
+ xmlHttpRequest.setRequestHeader('Content-Type', 'application/soap+xml;charset=UTF-8');
+ xmlHttpRequest.setRequestHeader('Content-Length', XML.length);
+ xmlHttpRequest.send(XML);
+ 
+ xmlHttpRequest = null;
+}

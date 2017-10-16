@@ -1,0 +1,52 @@
+unction addExistingFromSubGridCustom(params) {
+    var relName = params.gridControl.getParameter("relName"),
+        roleOrd = params.gridControl.getParameter("roleOrd"),
+        viewId = "{00000000-0000-0000-0000-000000000001}"; // vista voladora
+    
+    var customView = {
+        fetchXml: params.fetchXml,
+        id: viewId, 
+        layoutXml: params.layoutXml,
+        name: "Filtered Lookup View",
+        recordType: params.gridTypeCode,
+        Type: 0
+    };
+
+    var lookupItems = LookupObjects(null, "multi", params.gridTypeCode, 0, null, "", null, null, null, null, null, null, viewId, [customView]);
+    if (lookupItems && lookupItems.items.length > 0) {
+        AssociateObjects(crmFormSubmit.crmFormSubmitObjectType.value, crmFormSubmit.crmFormSubmitId.value, params.gridTypeCode, lookupItems, IsNull(roleOrd) || roleOrd == 2, "", relName);
+    }
+}
+
+function addExistingFromSubGridSubRubro(gridTypeCode, gridControl) {
+    addExistingFromSubGridCustom({
+        gridTypeCode: gridTypeCode,
+        gridControl: gridControl,
+		fetchXml: "<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'> " +
+					"<entity name='axx_subrubro'> " +
+					"<attribute name='axx_subrubroid' /> " +
+					"<attribute name='axx_name' /> " +
+					"<order attribute='axx_name' descending='false' /> " +
+					"<link-entity name='axx_rubro' from='axx_rubroid' to='axx_rubroid' alias='aa'> " +
+					"<filter type='and'> " +
+					"<condition attribute='axx_rubroid' operator='eq' uiname='Gastronomìa' uitype='axx_rubro' value='{F91BB4A0-9B72-E111-A8E1-00155D066504}' /> " +
+					"</filter> " +
+					"</link-entity> " +
+					"</entity> " +
+					"</fetch> ",
+        layoutXml: "<grid name='resultset' " +
+				"object='10044' " +
+				"jump='axx_name' " +
+				"select='1' " +
+				"icon='1' " +
+				"preview='1'>" +
+				"<row name='result' " +
+				"id='axx_subrubroid'>" +
+				"<cell name='axx_name' " +
+				"width='300' />" +
+				"<cell name='axx_rubroid' " +
+				"width='150' />" +
+				"</row>" +
+				"</grid>"
+    });
+}

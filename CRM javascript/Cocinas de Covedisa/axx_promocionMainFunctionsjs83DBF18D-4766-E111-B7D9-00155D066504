@@ -1,0 +1,50 @@
+function ObtenerAtributosDeCampana() {
+  var errorMssg = "alerta!";
+  var CampaniaId = Xrm.Page.getAttribute("axx_campanaid");
+  CampaniaId = (CampaniaId.getValue()) ? CampaniaId.getValue()[0].id : null;
+  if (!CampaniaId) {
+    return
+  }
+  
+  var organizationName = Xrm.Page.context.getOrgUniqueName();
+  var serverURL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/" + organizationName;
+  var odataSelect = serverURL + "/xrmservices/2011/OrganizationData.svc/axx_campanaSet?" + "$select=axx_campanaId,axx_Modalidad&$" + "filter=axx_campanaId eq guid'" + CampaniaId + "'";
+  $.ajax({
+    type: "GET",
+    contentType: "application/json; charset=utf-8",
+    datatype: "json",
+    url: odataSelect,
+    beforeSend: function (XMLHttpRequest) {
+      XMLHttpRequest.setRequestHeader("Accept", "application/json");
+    },
+    success: function (data, textStatus, XmlHttpRequest) {
+      // Use for a single selected entity
+      if (data.d.results.length == 0) {
+        alert(errorMssg);
+        return
+      } else {
+        procesarAtributosDeCampana(data.d.results[0], true);
+      }
+    },
+    error: function (XmlHttpRequest, textStatus, errorThrown) {
+      alert('OData Select Failed: ' + odataSelect);
+    }
+  });
+}
+
+function requirePriceList() {
+  var tipo = Xrm.Page.getAttribute("axx_tipodecampana").getValue();
+  var requiredLevel = (tipo.toString() == "100000000") ? "required" : "none";
+  Xrm.Page.getAttribute("axx_listadeprecios").setRequiredLevel(requiredLevel);
+}
+
+function procesarAtributosDeCampana(camposDefault, filtrarTipo) {
+  //Cargo el tipo de campaña
+  var campanaTipo = camposDefault.axx_Modalidad.Value;
+  if (filtrarTipo) {
+    if (campanaTipo != null) {
+      Xrm.Page.getAttribute("axx_tipodecampana").setValue(campanaTipo);
+      requirePriceList();
+    }
+  }
+}

@@ -1,0 +1,485 @@
+function getODataEndPoint() { return Xrm.Page.context.prependOrgName("/xrmservices/2011/OrganizationData.svc"); }
+
+function ocultarNumero(){
+  //Oculto el número ingresado en el campo Número de Tarjeta
+  var ind;
+  var numero = Xrm.Page.getAttribute("axx_numero").getValue();
+  var lengthText = numero.length;
+  var oculto = "";
+
+  for (ind = 0; ind < lengthText; ind++) {
+    oculto = oculto + "*";
+  }
+  Xrm.Page.getAttribute("axx_numero").setValue(oculto);
+}
+
+function bloquearDigitos() {
+  //Bloquea el campo que contiene los últimos digitos de la Tarjeta
+  Xrm.Page.getControl("axx_ultimosdigitos").setDisabled(true);
+}
+
+function moverCodigoSeguridad(){
+  //Muevo los datos dell campo Codigo de Seguridad a un campo oculto
+  Xrm.Page.getAttribute("axx_codigodeseguridadoculto").setValue(Xrm.Page.getAttribute("axx_codigodeseguridad").getValue());
+}
+
+function ocultarCodigoSeguridad(){
+  //Oculto el Código de Seguridad ingresado.
+  var ind;
+  var numero = Xrm.Page.getAttribute("axx_codigodeseguridad").getValue();
+  var lengthText = numero.length;
+  var oculto = "";
+
+  for (ind = 0; ind < lengthText; ind++) {
+    oculto = oculto + "*";
+  }
+  Xrm.Page.getAttribute("axx_codigodeseguridad").setValue(oculto);
+}
+
+function activarContactoCuenta(){
+  //Activo o desactivo las secciones de contacto o cuenta segun la opcion seleccionada por el usuario
+  if (Xrm.Page.getAttribute("axx_tipocc").getValue()==0)
+  {
+    Xrm.Page.ui.tabs.get("general").sections.get("seccionContacto").setVisible(true);
+    Xrm.Page.ui.tabs.get("general").sections.get("seccionCuenta").setVisible(false);
+    Xrm.Page.getAttribute("axx_cliente").setRequiredLevel("required");
+    Xrm.Page.getAttribute("axx_cuentaid").setRequiredLevel("none");
+    Xrm.Page.getAttribute("axx_cuentaid").setValue(null);
+  }
+  else
+  {
+    Xrm.Page.ui.tabs.get("general").sections.get("seccionContacto").setVisible(false);
+    Xrm.Page.ui.tabs.get("general").sections.get("seccionCuenta").setVisible(true);
+    Xrm.Page.getAttribute("axx_cliente").setRequiredLevel("none");
+    Xrm.Page.getAttribute("axx_cuentaid").setRequiredLevel("required");
+    Xrm.Page.getAttribute("axx_cliente").setValue(null);
+  }
+}
+
+function crearNameTarjeta(){    
+  tarjeta = Xrm.Page.getAttribute("axx_tarjetamstid").getValue()[0].name;
+  digitos = Xrm.Page.getAttribute("axx_ultimosdigitos").getValue();
+  tipo = Xrm.Page.getAttribute("axx_tipo").getText();    
+  name = tarjeta + "(" + tipo + ") - " + digitos;
+  Xrm.Page.getAttribute("axx_name").setValue(name);
+  Xrm.Page.getAttribute("axx_name").setSubmitMode("always");
+}
+
+function fechavencimiento(){
+  var mes = Xrm.Page.getAttribute("axx_mesdevencimiento").getText();
+  var ano = Xrm.Page.getAttribute("axx_anodevencimiento").getText();
+  if (mes!=null && ano !=null){
+    var venc = new Date();
+    venc.setDate(1);
+    venc.setMonth(mes);
+    venc.setYear(ano);
+    Xrm.Page.getAttribute("axx_fecha_de_vencimiento").setValue(venc);
+  }
+}
+
+function ValidarNumeroTarjeta(){
+  gblflagValidado = false; // Flag global de numero validado
+  hideAlert(); 
+  if (Xrm.Page.getAttribute("axx_numero").getValue() != null)
+  {
+    var numeroTarjeta = Xrm.Page.getAttribute("axx_numero").getValue();    
+    var auxNum = "";
+    //Quito los posibles espacios en blanco y guiones del número
+    var numero = replaceAll(numeroTarjeta, " ", "");
+    numero = replaceAll(numero, "-", "");
+    
+    var Error = false;
+    //Controlo que la cadena enviada sea numerica
+    var auxChar = "";
+    for (var car = 0; car <= numero.length - 1; car++)
+    {
+      auxChar = numero.substring(car, car + 1);
+      if (IsNumber(auxChar) != true)
+      {
+        Error = true;
+      }
+    }
+    if (!Error)
+    {
+	  var validador = ValidarFormatoTarjeta(numero); // Traer objeto validador
+	  
+	  if (validador == null || validador === undefined){
+	      showAlert("El prefijo esta fuera de los rangos establecidos");    
+		  return;
+	  }else{		  
+		  if(numero.length > validador.axx_LongitudMax){
+			  showAlert("El largo del 'Número' de Tarjeta es mayor a la longitud Máxima (" + validador.axx_LongitudMax + ")");    
+              Xrm.Page.getControl("axx_numero").setFocus(true);
+			  return;
+		  }
+		  
+		  if(numero.length < validador.axx_LongitudMin){
+			  showAlert("El largo del 'Número' de Tarjeta es menor a la longitud Mínima (" + validador.axx_LongitudMin + ")");   
+              Xrm.Page.getControl("axx_numero").setFocus(true);
+			  return;
+		  }
+			  
+		  if(validador.axx_DigitoVerificador){ // Valido por digito
+			  if (digitoVerificador(numero)){
+				  //Si el numero es correcto llamo a las funciones que realizan el resto de las accciones sobre el numero de la tarjeta
+				  Xrm.Page.getAttribute("axx_numero").setValue(numero);
+				  moverNumero();
+				  obtenerUltimosDigitos();		  
+			  }else{
+				  showAlert("El Número de Tarjeta es invalido.");
+				  Xrm.Page.getControl("axx_numero").setFocus(true);	
+				  return;
+			  }
+		  }
+		  gblflagValidado = true;
+	   }
+    }
+    else
+    {
+      showAlert("El 'Número' de Tarjeta contiene caracteres incorrectos.");
+      Xrm.Page.getControl("axx_numero").setFocus(true);
+    }
+  }
+  else
+  {
+    Xrm.Page.getAttribute("axx_ultimosdigitos").setValue(null);
+    Xrm.Page.getAttribute("axx_numerooculto").setValue(null);
+  }  
+}
+
+function replaceAll(Texto, busca, reemplaza){ 
+  while (Texto.toString().indexOf(busca) != -1) 
+  Texto = Texto.toString().replace(busca,reemplaza); 
+  
+  return Texto; 
+}
+
+function IsNumber(valor){
+  return (String(valor).search(/^\d+$/) != -1);
+}
+
+function  retrieveRecord(id, odataSetName, successCallback, errorCallback) {
+  
+  //id is required
+  if (!id) {
+    alert("record id is required.");
+    return;
+  }
+  //odataSetName is required, i.e. "AccountSet"
+  if (!odataSetName) {
+    alert("odataSetName is required.");
+    return;
+  }
+
+  //Asynchronous AJAX function to Retrieve a CRM record using OData
+  $.ajax({
+type: "GET",
+async:false,
+contentType: "application/json; charset=utf-8",
+datatype: "json",
+url:getODataEndPoint() + "/" + odataSetName + "?$filter=SystemUserId eq guid'"+id+"'",
+beforeSend: function (XMLHttpRequest) {
+      //Specifying this header ensures that the results will be returned as JSON.             
+      XMLHttpRequest.setRequestHeader("Accept", "application/json");
+    },
+success: function (data, textStatus, XmlHttpRequest) {
+      if (successCallback) {
+        return  successCallback(data.d, textStatus, XmlHttpRequest);
+      }
+    },
+error: function (XmlHttpRequest, textStatus, errorThrown) {
+      if (errorCallback)
+      errorCallback(XmlHttpRequest, textStatus, errorThrown);
+      else
+      errorHandler(XmlHttpRequest, textStatus, errorThrown);
+    }
+  });
+}
+
+function ObtenerValorTarjeta(data, textStatus, XmlHttpRequest){
+  VerTarjeta_=data.results[0].axx_VerTarjeta;
+}
+
+function _onLoad(){
+  MAX_YEAR = 2030;
+  
+  today = new Date();
+  year  = today.getFullYear();
+  
+  options = new Array();
+  for (i = year; (i <= MAX_YEAR) ; i++)
+  {
+    options.push(i);
+  }
+  
+  dejarOpcionesArray("axx_anodevencimiento", options);
+  
+}
+
+function _onSave(ExecutionObj){
+  today = new Date();
+  vencimiento = Xrm.Page.getAttribute("axx_fecha_de_vencimiento").getValue();
+  
+  if (vencimiento){
+    vencimiento.setDate(1);
+    vencimiento.setHours(0,0,0,1);
+  }
+  
+  if (vencimiento == null || vencimiento < today){
+    NotificacionVencimiento();
+    ExecutionObj.getEventArgs().preventDefault();
+  }
+}
+
+function NotificacionVencimiento() {
+  var notificationsArea = document.getElementById('crmNotifications');
+  var message = "La fecha de vencimiento de la tarjeta no puede ser menor a la fecha actual";
+  var timeOutMessage = 6000;
+  
+  if (notificationsArea == null){
+    alert('Error al mostrar notificaciones: Div not found');
+    return;
+  }
+  
+  notificationsArea.SetNotifications(null, null);
+  
+  /*
+      The integer is the notification type
+      1 = Error | 2 = Warning | 3 = Info
+      notificationsArea.AddNotification("<;unique value>;", 3, "","Your text here");
+    */
+  
+  /*Create the notification*/
+  notificationsArea.AddNotification("1001", 2, "1001", message);
+  
+  /*clear out notification area*/
+  window.setTimeout("clearNotifications()",timeOutMessage);
+}
+
+function clearNotifications(){
+  var notificationsArea = document.getElementById('crmNotifications');
+  /*clear out notification area*/
+  notificationsArea.SetNotifications(null, null);
+
+}
+
+//Bloquea el campo Código de Tarjeta en la ventana de Errores de Tarjetas segun el proceso
+function bloquearNumeroTarjeta(){
+  var tipoProceso;
+  tipoProceso = Xrm.Page.getAttribute("axx_proceso").getValue();
+  if (tipoProceso==null)
+  {
+    tipoProceso=0;
+  }
+  
+  if (tipoProceso==1)
+  {
+    Xrm.Page.getControl("axx_codigotarjeta").setDisabled(false);		
+    Xrm.Page.getAttribute("axx_codigotarjeta").setRequiredLevel("required");
+  }
+  else
+  {
+    Xrm.Page.getControl("axx_codigotarjeta").setDisabled(true);
+    Xrm.Page.getAttribute("axx_codigotarjeta").setRequiredLevel("none");			
+    Xrm.Page.getAttribute("axx_codigotarjeta").setValue(null);
+  }
+}
+
+function crearNombreErrorTarjeta(){    
+  var tarjeta = Xrm.Page.getAttribute("axx_codigotarjeta").getValue();
+  var proceso = Xrm.Page.getAttribute("axx_proceso").getText();  
+  var tipo = Xrm.Page.getAttribute("axx_recuperable").getValue();
+  var tipoError;
+  if(tipo)  
+  {
+  	tipoError = "Recuperable";
+  }
+  else
+  {
+  	tipoError = "NO Recuperable";
+  }
+  
+  var code = Xrm.Page.getAttribute("axx_coderror").getValue();
+  
+  var name  = "Error " + code + " - " + tipoError + " - " + proceso;
+  
+  if (tarjeta!=null)	
+  {
+    name = name + " - " + tarjeta[0].name;
+  }
+  
+  Xrm.Page.getAttribute("axx_name").setValue(name);
+  Xrm.Page.getAttribute("axx_name").setSubmitMode("always");
+}
+
+function ValidarFormatoTarjeta(numero){	
+	var entity;
+	var fields;
+	var filter;
+	var prefijo = numero.slice(0,5);
+		
+	// Obtener el Id de WonderSoft
+	entity = "axx_maestrodetarjetas";
+	fields = "axx_IdTarjeta";
+	filter = "axx_maestrodetarjetasId eq guid'" + lookup2guid(Xrm.Page.getAttribute("axx_tarjetamstid").getValue()) + "'";
+	var tipo = ODataSelect(entity, fields, filter).axx_IdTarjeta;
+	
+	// Obtener el objeto de validacion
+	entity = "axx_formatostarjetas";
+	fields = "axx_DigitoVerificador,axx_LongitudMax,axx_LongitudMin";
+	filter = "axx_IdTarjeta eq '" + tipo + "' and axx_prefijodesde le " + prefijo + " and axx_prefijohasta ge " + prefijo;	
+	var retval = ODataSelect(entity, fields, filter);
+	return retval;
+}
+
+function digitoVerificador(numerator){
+    var vNumerator = "";
+    var t = 0;
+    var vSum = 0;
+    var vControl = 0;
+    var digit = numerator.charAt(numerator.length-1);
+	numerator = numerator.substring(0, numerator.length - 1);
+
+
+	/*
+	' Se asume que el numerador recibido no contiene el dígito verificador
+	' MODULO 10 de la norma ISO 2894-2974 (E)
+	'  _ _ _ _ - _ _ _ _ - _ _ _ _ - _ _ _ _
+	'  (  B  I  N  )(EQ)   (NUMERADOR inc) x -> digito verificador
+	'
+	'   +---+---+---+---+---+---+
+	'a  | 2 | 6 | 6 | 5 | 3 | 3 |
+	'   +---+---+---+---+---+---+
+	'     |   |   |   |   |   |
+	'    x2  x1  x2  x1  x2  x1
+	'     |   |   |   |   |   |
+	'b   =4  =6 =12  =5  =6  =3
+	'     |   |   |   |   |   |
+	'c   +4  +6 +1 +2 +5 +6  +3   = 27               Descomoposicion de los valores mayores a 9 obtenidos en b, y sumarlos
+	'     |   |   |   |   |   |
+	'd   30 - 27 = 3     El digito verificador es 3           Restar el valor obtenido del numero mas proximo terminado en cero
+	'
+	'    NOTA: Si el valor obtenido en la fila "C" termina en cero, el digito verificador es "0"
+	*/
+    
+    //b)
+    for (t = numerator.length; t >0; t--){
+        if (t % 2 == 0){
+            vNumerator += (parseInt(numerator.charAt(t-1), 10) * 2).toString();
+        }else{
+            vNumerator += (numerator.charAt(t-1)).toString();
+        }
+    }
+
+    //c)
+    for (t = 0; t <= vNumerator.length - 1; t++){
+        vSum += parseInt(vNumerator.charAt(t), 10);
+    }
+
+    vControl = (parseInt(Left(vSum.toString() , 1), 10) + 1) * Math.pow(10, (vSum.toString().length - 1));
+
+    if (digit == (vControl - vSum)){
+        return true;
+    }else{
+        return false;
+    }
+}
+
+function Left(str, n){
+    if (n <= 0)
+        return "";
+    else if (n > String(str).length)
+        return str;
+    else
+        return String(str).substring(0,n);
+}
+
+function Right(str, n){
+    if (n <= 0)
+        return "";
+    else if (n > String(str).length)
+        return str;
+    else {
+        var iLen = String(str).length;
+    return String(str).substring(iLen, iLen - n);
+    }
+}
+
+/*
+function digitoVerificador(numero){
+	var digitoVerificar = numero.substr(numero.length - 1, 1);
+	var auxAcumula = 0;
+	numero = numero.substring(0, numero.length - 1);
+	//for (var aux = 1; aux <= numero.length; aux++)
+	for (var aux = numero.length; aux >= 0; aux--)
+	{
+	  //Si la posicion es impar
+	  if (aux % 2 == 1)
+	  {
+		//Calculo el doble
+		//auxNum = Convert.ToString(Convert.ToInt32(numero.Substring(numero.length - aux, 1)) * 2);
+		auxNum = parseInt(numero.substr(aux - numero.length, 1)) * 2;
+
+		//Si el doble tiene mas de dos cifras
+		if (String(auxNum).length == 2)
+		{
+		  //auxNum = Convert.ToString(Convert.ToInt32(auxNum.Substring(0, 1)) + Convert.ToInt32(auxNum.Substring(1, 1)));
+		  auxNum = parseInt(String(auxNum).substr(0, 1)) + parseInt(String(auxNum).substr(1, 1));
+		}
+
+		auxAcumula += parseInt(auxNum);
+	  }
+	  else
+	  {
+		//Si la posición es par
+		auxNum = numero.substr(aux - numero.length, 1);
+		auxAcumula += parseInt(auxNum);
+	  }
+	}
+	//Busco el número divisible por 10 mayor, mas cercano al acumulado.
+	var Mayor = auxAcumula;
+	while (String(Mayor).substr(String(Mayor).length - 1, 1) != "0")
+	{
+	  Mayor = parseInt(Mayor) + 1;
+	}
+
+	var auxDigitVerificador = parseInt(Mayor) - auxAcumula;
+
+	if (auxDigitVerificador == digitoVerificar)
+	{
+	  return true;
+	}
+	else
+	{
+	  return false;
+	}
+}
+*/
+
+function onSaveFunctions(ExecutionObj){    
+    if (!gblflagValidado){
+	    ExecutionObj.getEventArgs().preventDefault();
+	}else{
+	    codificarNumero();
+		obtenerUltimosDigitos();
+		ocultarNumero();
+		crearNameTarjeta();
+		_onSave(ExecutionObj);
+	}
+}
+
+function showAlert(message){
+    var notificationsArea = document.getElementById('crmNotifications');
+    if (notificationsArea == null) {
+        alert(message);
+    }else{
+       notificationsArea.AddNotification("1230000321", 2, "ribbonButton", message); 
+    }
+}
+
+function hideAlert(){
+    var notificationsArea = document.getElementById('crmNotifications');
+    if (notificationsArea != null) {
+        notificationsArea.SetNotifications("1230000321", "ribbonButton");
+    }    
+}

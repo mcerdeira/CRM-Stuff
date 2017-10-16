@@ -1,0 +1,173 @@
+function setNull() {
+    var aLength, i;
+    aLength = arguments.length;
+    for (i = 0; i < aLength; i++) {
+        Xrm.Page.getAttribute(arguments[i]).setValue(null);
+    }
+}
+
+function setVisible() {
+    var aLength, i;
+    aLength = arguments.length;
+    for (i = 0; i < aLength; i++) {
+        arguments[i].setVisible(true);
+    }
+}
+function seleccionarEsquemas() {
+    var getSection, seccionSeleccionarEsquemas, todosLosEsquemas, esSuscripcion, rangoApplicacion;
+    getSection = function (section) {return Xrm.Page.ui.tabs.get("{a87e234f-ef5f-48cc-aad3-458031d37847}").sections.get(section); };
+    seccionSeleccionarEsquemas = getSection("{a87e234f-ef5f-48cc-aad3-458031d37847}_section_12");
+    rangoApplicacion = Xrm.Page.getAttribute("axx_rangodeaplicacion").getValue();
+    todosLosEsquemas = Xrm.Page.getAttribute("axx_todoslosesquemas").getValue();
+    esSuscripcion = (rangoApplicacion == 282270000 || rangoApplicacion == 282270001);
+    seccionSeleccionarEsquemas.setVisible(esSuscripcion && !todosLosEsquemas);
+}
+function mostrarRangos() {
+    var getSection, seccionEntrega, seccionImporte, seccionFechas, seccionSeleccionarEsquemas,
+        seccionEsquemas, rangoApplicacion, esSuscripcion;
+    getSection = function (section) {return Xrm.Page.ui.tabs.get("{a87e234f-ef5f-48cc-aad3-458031d37847}").sections.get(section); };
+    seccionEntrega = getSection("{a87e234f-ef5f-48cc-aad3-458031d37847}_section_4");
+    seccionImporte = getSection("{a87e234f-ef5f-48cc-aad3-458031d37847}_section_5");
+    seccionFechas = getSection("{a87e234f-ef5f-48cc-aad3-458031d37847}_section_3");
+    seccionEsquemas = getSection("tab_3_section_1");
+    seccionSeleccionarEsquemas = getSection("{a87e234f-ef5f-48cc-aad3-458031d37847}_section_12");
+    rangoApplicacion = Xrm.Page.getAttribute("axx_rangodeaplicacion").getValue();
+    seccionEntrega.setVisible(false);
+    seccionFechas.setVisible(false);
+    seccionImporte.setVisible(false);
+    seccionEsquemas.setVisible(false);
+    seccionSeleccionarEsquemas.setVisible(false);
+    esSuscripcion = false;
+    switch (rangoApplicacion) {
+        //Suscripción - por Importe en Entregas
+    case 282270000:
+        setNull("axx_desdefecha", "axx_hastafecha");
+        setVisible(seccionEntrega, seccionImporte, seccionEsquemas);
+        break;
+        //Suscripción - por Fechas en Entregas
+    case 282270001:
+        setNull("axx_desdevalor", "axx_hastavalor");
+        setVisible(seccionEntrega, seccionFechas, seccionEsquemas);
+        break;
+        //One Shot - por Importe en Fechas
+    case 282270002:
+        setNull("axx_desdeentrega", "axx_hastaentrega");
+        setVisible(seccionFechas, seccionImporte);
+        break;
+    }
+    seleccionarEsquemas();
+}
+function mostrarBonificaciones() {
+    var getSection, seccionPesos, seccionPorcentaje, seccionRegalo, seccionGastoEnvio, seccionCoeficienteFinanciero, tipoBonificacion;
+    getSection = function (section) {return Xrm.Page.ui.tabs.get("{a87e234f-ef5f-48cc-aad3-458031d37847}").sections.get(section); };
+    seccionPesos = getSection("{a87e234f-ef5f-48cc-aad3-458031d37847}_section_6");
+    seccionPorcentaje = getSection("{a87e234f-ef5f-48cc-aad3-458031d37847}_section_7");
+    seccionRegalo = getSection("{a87e234f-ef5f-48cc-aad3-458031d37847}_section_8");
+    seccionGastoEnvio = getSection("{a87e234f-ef5f-48cc-aad3-458031d37847}_section_10");
+    seccionCoeficienteFinanciero = getSection("{a87e234f-ef5f-48cc-aad3-458031d37847}_section_11");
+    tipoBonificacion = Xrm.Page.getAttribute("axx_tipodebonificacion").getValue();
+    seccionPesos.setVisible(false);
+    seccionPorcentaje.setVisible(false);
+    seccionRegalo.setVisible(false);
+    seccionGastoEnvio.setVisible(false);
+    seccionCoeficienteFinanciero.setVisible(false);
+    switch (tipoBonificacion) {
+        //Descuento$
+    case 282270000:
+        setNull("axx_descuento_porcentage", "axx_regalo", "axx_coeficientefinanciero", "axx_porcentajegastodeenvio");
+        setVisible(seccionPesos);
+        break;
+        //Descuento%
+    case 282270001:
+        setNull("axx_descuento_money", "axx_regalo", "axx_coeficientefinanciero", "axx_porcentajegastodeenvio");
+        setVisible(seccionPorcentaje);
+        break;
+        //Regalo
+    case 282270002:
+        setNull("axx_descuento_money", "axx_descuento_porcentage", "axx_coeficientefinanciero", "axx_porcentajegastodeenvio");
+        setVisible(seccionRegalo);
+        break;
+        //Gasto de Envío
+    case 282270003:
+        setNull("axx_descuento_money", "axx_descuento_porcentage", "axx_coeficientefinanciero", "axx_regalo");
+        setVisible(seccionGastoEnvio);
+        break;
+        //Coeficiente Financiero
+    case 282270004:
+        setNull("axx_descuento_money", "axx_descuento_porcentage", "axx_porcentajegastodeenvio", "axx_regalo");
+        setVisible(seccionCoeficienteFinanciero);
+        break;
+    }
+}
+function validarFechasBonificaciones(prmContext) {
+    var selectedOptionSet = Xrm.Page.getAttribute("axx_rangodeaplicacion").getSelectedOption().value;
+    var desdevalor = Xrm.Page.getAttribute("axx_desdevalor").getValue();
+    var hastavalor = Xrm.Page.getAttribute("axx_hastavalor").getValue();
+    var desdeentrega = Xrm.Page.getAttribute("axx_desdeentrega").getValue();
+    var hastaentrega = Xrm.Page.getAttribute("axx_hastaentrega").getValue();
+    var desdefecha = Xrm.Page.getAttribute("axx_desdefecha").getValue();
+    var hastafecha = Xrm.Page.getAttribute("axx_hastafecha").getValue();
+    if (selectedOptionSet == 282270000) {
+        if (desdevalor > hastavalor) {
+            alert("El valor inicial del rango ingresado  tiene que ser menor o igual al valor final del rango ingresado");
+            prmContext.getEventArgs().preventDefault();
+        }
+        if (desdeentrega > hastaentrega) {
+            alert("La entrega inicial del rango ingresado  tiene que ser menor o igual a la entrega  final del rango ingresado");
+            prmContext.getEventArgs().preventDefault();
+        }
+    } else if (selectedOptionSet == 282270001) {
+        if (desdefecha > hastafecha) {
+            alert("El valor inicial de la fecha ingresada  tiene que ser menor o igual a la fecha final del rango ingresado");
+            prmContext.getEventArgs().preventDefault();
+        }
+        if (desdeentrega > hastaentrega) {
+            alert("La entrega inicial del rango ingresado  tiene que ser menor o igual a la entrega  final del rango ingresado");
+            prmContext.getEventArgs().preventDefault();
+        }
+    } else if (selectedOptionSet == 282270002) {
+        if (desdefecha > hastafecha) {
+            alert("El valor inicial de la fecha ingresada  tiene que ser menor o igual a la fecha final del rango ingresado");
+            prmContext.getEventArgs().preventDefault();
+        }
+        if (desdevalor > hastavalor) {
+            alert("El valor inicial del rango ingresado  tiene que ser menor o igual al valor final del rango ingresado");
+            prmContext.getEventArgs().preventDefault();
+        }
+    }
+}
+
+//If the axx namespace object is not defined, create it.
+/*global axx: true */
+if (typeof (axx) == "undefined") {
+    axx = {};
+}
+// Create Namespace container for functions in this library;
+axx.getBitText = function (attribute) {
+    var thisE = document.getElementById(attribute);
+    var value = Xrm.Page.getAttribute(attribute).getValue();
+    return (value == thisE.firstChild.value) ? thisE.firstChild.text : thisE.lastChild.text;
+};
+// Create Namespace container for functions in this library;
+axx.TwoOptionsButton = {
+    button : null,
+    attributeName : null,
+    attribute : null,
+    initialize : function (webResource, attributeName, afterClickFocusOn) {
+        this.attributeName = attributeName;
+        this.attribute = Xrm.Page.getAttribute(attributeName);
+        this.button = getButton(webResource);
+        this.button.setOnClick("parent.axx.TwoOptionsButton.toggle();" +
+                               "parent.Xrm.Page.getControl('" + afterClickFocusOn + "').setFocus();" +
+                               "parent.axx.TwoOptionsButton.attribute.fireOnChange()");
+        this.setText();
+    },
+    setText : function () {
+        this.button.setText(axx.getBitText(this.attributeName));
+    },
+    toggle : function () {
+        this.attribute.setValue(!this.attribute.getValue());
+        this.attribute.setSubmitMode("always");
+        this.setText();
+    }
+};

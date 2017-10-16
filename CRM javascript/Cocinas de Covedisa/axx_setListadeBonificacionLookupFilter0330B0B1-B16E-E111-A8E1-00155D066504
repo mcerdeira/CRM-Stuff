@@ -1,0 +1,33 @@
+function setLookUpFilter() {
+  var recordname = Xrm.Page.getAttribute("axx_tipodecampana").getSelectedOption();
+  var recordid = Xrm.Page.getAttribute("axx_tipodecampana").getValue();
+  if (recordname != null){
+    recordname = recordname.text;
+  }        
+  if (recordname != null )
+  {
+    var viewId = "{00000000-0000-0000-0000-000000000003}";
+    var entityName = "axx_listadebonificaciones";
+    var viewDisplayName = "Bonificaciones - Modalidad: " + recordname + "";
+
+    var fetchXml = "<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>" +
+    "<entity name='axx_listadebonificaciones'>" +
+    "<attribute name='axx_listadebonificacionesid' />" + 
+    "<attribute name='axx_name' />" + 
+    "<attribute name='createdon' />" +     
+    "<order attribute='axx_name' descending='false' />" +     
+    "<filter type='and'>" +
+    "<condition attribute='axx_modalidad' operator='eq' value='" + recordid + "' />" +
+    "</filter>" +
+    "</entity>" +
+    "</fetch>";      
+    var layoutXml = "" +
+    	"<grid name='resultset' object='10017' jump='axx_name' select='1' icon='1' preview='1'>" +
+  			"<row name='result' id='axx_listadebonificacionesid'>" +
+    			"<cell name='axx_name' width='300'/>" +
+    			"<cell name='axx_modalidad' width='100'/>" +
+  			"</row>" +
+		"</grid>";
+    Xrm.Page.getControl("axx_listadebonificacionid").addCustomView(viewId, entityName, viewDisplayName, fetchXml, layoutXml, true);
+  }
+}

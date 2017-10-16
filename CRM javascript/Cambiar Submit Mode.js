@@ -1,0 +1,1 @@
+Xrm.Page.getAttribute("new_programaoportunidad_origen").setSubmitMode("always");

@@ -1,0 +1,88 @@
+function ValidateFormaPago(ExCont, FPagoFieldName, CPFieldName)
+{
+ var CodPostal;
+ var FormaDePagoId;
+ var FPagoValue;
+
+ if(Xrm.Page.getAttribute(FPagoFieldName).getValue() != null && Xrm.Page.getAttribute(CPFieldName).getValue() != null)
+ {
+  CodPostal = Xrm.Page.getAttribute(CPFieldName).getValue();
+  FormaDePagoId = Xrm.Page.getAttribute(FPagoFieldName).getValue()[0].id;
+  FPagoValue = GetFormaDePagoValue(FormaDePagoId);
+  
+  if(FPagoValue == '2' && parseInt(CodPostal) >= 1900) //Forma de pago Contrareembolso y envío al interior.
+  {
+   if(ExCont.getEventArgs() != null)
+     ExCont.getEventArgs().preventDefault(); //Cancelo evento OnSave.
+
+   alert('No se puede seleccionar la forma de pago \'Contrareembolso\' si el envío es al interior del país.\nSe canceló el guardado del formulario.');
+  }
+ }
+}
+
+function GetFormaDePagoValue(FormaDePagoId)
+{
+ var Ret;
+ var DOM;
+ var xml;
+ var xmlHttpRequest;
+ var FormaDePago;
+
+ DOM = new ActiveXObject('Msxml2.DOMDocument');
+
+ FormaDePagoId = FormaDePagoId.replace('{','').replace('}','');
+
+ xml =
+ "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+ "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">" +
+ GenerateAuthenticationHeader() +
+ "  <soap:Body>" +
+ "    <RetrieveMultiple xmlns=\"http://schemas.microsoft.com/crm/2007/WebServices\">" +
+ "      <query xmlns:q1=\"http://schemas.microsoft.com/crm/2006/Query\" xsi:type=\"q1:QueryExpression\">" +
+ "        <q1:EntityName>axx_formadepago</q1:EntityName>" +
+ "        <q1:ColumnSet xsi:type=\"q1:ColumnSet\">" +
+ "          <q1:Attributes>" +
+ "            <q1:Attribute>axx_formadepago</q1:Attribute>" +
+ "          </q1:Attributes>" +
+ "        </q1:ColumnSet>" +
+ "        <q1:Distinct>false</q1:Distinct>" +
+ "        <q1:PageInfo>" +
+ "          <q1:PageNumber>1</q1:PageNumber>" +
+ "          <q1:Count>50</q1:Count>" +
+ "        </q1:PageInfo>" +
+ "        <q1:Criteria>" +
+ "          <q1:FilterOperator>And</q1:FilterOperator>" +
+ "          <q1:Conditions>" +
+ "            <q1:Condition>" +
+ "              <q1:AttributeName>axx_formadepagoid</q1:AttributeName>" +
+ "              <q1:Operator>Equal</q1:Operator>" +
+ "              <q1:Values>" +
+ "                <q1:Value xmlns:q2=\"http://microsoft.com/wsdl/types/\" xsi:type=\"q2:guid\">" + FormaDePagoId + "</q1:Value>" +
+ "              </q1:Values>" +
+ "            </q1:Condition>" +
+ "          </q1:Conditions>" +
+ "        </q1:Criteria>" +
+ "      </query>" +
+ "    </RetrieveMultiple>" +
+ "  </soap:Body>" +
+ "</soap:Envelope>";
+
+ xmlHttpRequest = new ActiveXObject("Msxml2.XMLHTTP");
+
+ xmlHttpRequest.Open("POST", "/mscrmservices/2007/CrmService.asmx", false);
+ xmlHttpRequest.setRequestHeader("SOAPAction","http://schemas.microsoft.com/crm/2007/WebServices/RetrieveMultiple");
+ xmlHttpRequest.setRequestHeader("Content-Type", "text/xml; charset=utf-8");
+ xmlHttpRequest.setRequestHeader("Content-Length", xml.length);
+ xmlHttpRequest.send(xml);
+
+ DOM.loadXML(xmlHttpRequest.responseText);
+
+ FormaDePago = DOM.getElementsByTagName("q1:axx_formadepago");
+
+ if(FormaDePago.length != 0)
+   Ret = FormaDePago.item(0).text;
+ else
+   Ret = '-1';
+
+ return Ret;
+}

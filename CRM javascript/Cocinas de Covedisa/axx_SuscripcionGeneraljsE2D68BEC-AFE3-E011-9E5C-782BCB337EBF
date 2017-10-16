@@ -1,0 +1,392 @@
+function getODataEndPoint() {
+  return Xrm.Page.context.prependOrgName("/xrmservices/2011/OrganizationData.svc");
+}
+
+function ObtenerFormaDePago(data, textStatus, XmlHttpRequest) {
+  medioPagoId_ = data.results[0].axx_MediodePagoId.Id;
+  medioPagoType_ = data.results[0].axx_MediodePagoId.LogicalName;
+  medioPagoName_ = data.results[0].axx_MediodePagoId.Name;
+  bancoId_ = data.results[0].axx_EntidadBancariaId.Id;
+  bancoType_ = data.results[0].axx_EntidadBancariaId.LogicalName;
+  bancoName_ = data.results[0].axx_EntidadBancariaId.Name;
+  tipoTarjeta_ = data.results[0].axx_FormadePago.Value;
+}
+
+function retrieveFormaDePago(id, odataSetName, successCallback, errorCallback) {
+  //id is required
+  if (!id) {
+    alert("record id is required.");
+    return;
+  }
+  if (!odataSetName) {
+    alert("odataSetName is required.");
+    return;
+  }
+  //Asynchronous AJAX function to Retrieve a CRM record using OData
+  $.ajax({
+    type: "GET",
+    async: false,
+    contentType: "application/json; charset=utf-8",
+    datatype: "json",
+    url: getODataEndPoint() + "/" + odataSetName + "?$filter=axx_formadepagoId  eq  guid'" + id + "'",
+    beforeSend: function (XMLHttpRequest) {
+      //Specifying this header ensures that the results will be returned as JSON.             
+      XMLHttpRequest.setRequestHeader("Accept", "application/json");
+    },
+    success: function (data, textStatus, XmlHttpRequest) {
+      if (successCallback) {
+        successCallback(data.d, textStatus, XmlHttpRequest);
+      }
+    },
+    error: function (XmlHttpRequest, textStatus, errorThrown) {
+      if (errorCallback) errorCallback(XmlHttpRequest, textStatus, errorThrown);
+      else errorHandler(XmlHttpRequest, textStatus, errorThrown);
+    }
+  });
+}
+
+function crearNuevaTarjeta() {
+  var customerId;
+  var customerName;
+  var tipoCliente = Xrm.Page.getAttribute("axx_tipodecliente").getValue();
+  if (tipoCliente != null && tipoCliente == 0) {
+    customerId = Xrm.Page.getAttribute("axx_contactid").getValue()[0].id;
+    customerName = Xrm.Page.getAttribute("axx_contactid").getValue()[0].name;
+  } else if (tipoCliente != null && tipoCliente == 1) {
+    customerId = Xrm.Page.getAttribute("axx_accountid").getValue()[0].id;
+    customerName = Xrm.Page.getAttribute("axx_accountid").getValue()[0].name;
+  }
+  var formaDePagoId;
+  tipoTarjeta_ = null;
+  medioPagoId_ = null;
+  medioPagoName_ = null;
+  medioPagoType_ = null;
+  bancoId_ = null;
+  bancoName_ = null;
+  bancoType_ = null;
+  if (Xrm.Page.getAttribute("axx_formadepago").getValue() != null) {
+    formaDePagoId = Xrm.Page.getAttribute("axx_formadepago").getValue()[0].id;
+    retrieveFormaDePago(formaDePagoId, "axx_formadepagoSet", ObtenerFormaDePago, null);
+  }  
+  //var serverUrl = Xrm.Page.context.getServerUrl();  
+  var serverUrl = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/" + Xrm.Page.context.getOrgUniqueName();  
+  var tipoCuenta = "axx_tipocc=" + tipoCliente;
+  if (tipoTarjeta_ != null) tipoCuenta = tipoCuenta + "&axx_tipo=" + tipoTarjeta_;
+  if (medioPagoId_ != null && medioPagoName_ != null) {
+    tipoCuenta = tipoCuenta + "&axx_tarjetamstid=" + medioPagoId_ + "&axx_tarjetamstidname=" + medioPagoName_;
+  }
+  if (bancoId_ != null && bancoName_ != null) {
+    tipoCuenta = tipoCuenta + "&axx_bancoid=" + bancoId_ + "&axx_bancoidname=" + bancoName_;
+  }
+  if (customerId != null && customerName != null && tipoCliente == 0) {
+    tipoCuenta = tipoCuenta + "&axx_cliente=" + customerId + "&axx_clientename=" + customerName;
+  } else if (customerId != null && customerName != null && tipoCliente == 1) {
+    tipoCuenta = tipoCuenta + "&axx_cuentaid=" + customerId + "&axx_cuentaidname=" + customerName;
+  }
+  var tipoCuenta = encodeURIComponent(tipoCuenta);
+  var linkWindow = serverUrl + "/main.aspx?etn=axx_tarjeta&extraqs=" + tipoCuenta + "&pagetype=entityrecord";
+  
+  var screenWidth = screen.availWidth;
+  var alto = 560;
+  var ancho = 800;
+  var windowPosition = "top=10,left=" + ((screenWidth-ancho)/2);
+  var windowSize = "width=" + ancho + ",height=" + alto;
+  
+  var features = 'resizable=no,scrollbars=no,location=no' + windowPosition + ',' + windowSize;
+	var ventana= window.open(linkWindow, '', features);
+
+}
+
+function setSuscripcionName() {
+  if (Xrm.Page.getAttribute("axx_name").getValue() == null || Xrm.Page.getAttribute("axx_name").getValue() == "New") {
+    esquema = Xrm.Page.getAttribute("axx_esquemadesuscripcion").getValue()[0].name;
+    hoy = new Date();
+    fecha = hoy.getDate();
+    mes = hoy.getMonth() + 1
+    fecha = fecha + "/" + mes;
+    fecha = fecha + "/" + hoy.getYear();
+    if (Xrm.Page.getAttribute("axx_contactid").getValue() != null) {
+      cliente = Xrm.Page.getAttribute("axx_contactid").getValue()[0].name
+    }
+    if (Xrm.Page.getAttribute("axx_accountid").getValue() != null) {
+      cliente = Xrm.Page.getAttribute("axx_accountid").getValue()[0].name
+    }
+    nombre = esquema + " / " + cliente + " - " + fecha;
+    //alert ("Establecer Name: " + nombre);
+    Xrm.Page.getAttribute("axx_name").setValue(nombre);
+  } else {
+    if (Xrm.Page.getAttribute("axx_name").getValue() != null) {
+      //var nombreoriginal = Xrm.Page.getAttribute("axx_name").getValue();
+      //nombreoriginal = nombreoriginal.substring(nombreoriginal.indexOf("-"));
+      creacion = Xrm.Page.getAttribute("createdon").getValue();
+      fecha = creacion.getDate();
+      mes = creacion.getMonth() + 1
+      fecha = fecha + "/" + mes;
+      fecha = fecha + "/" + creacion.getYear();
+      esquema = Xrm.Page.getAttribute("axx_esquemadesuscripcion").getValue()[0].name;
+      if (Xrm.Page.getAttribute("axx_contactid").getValue() != null) {
+        cliente = Xrm.Page.getAttribute("axx_contactid").getValue()[0].name
+      }
+      if (Xrm.Page.getAttribute("axx_accountid").getValue() != null) {
+        cliente = Xrm.Page.getAttribute("axx_accountid").getValue()[0].name
+      }
+      nombre = esquema + " - " + cliente + " - " + fecha;
+      Xrm.Page.getAttribute("axx_name").setSubmitMode("always");
+      Xrm.Page.getAttribute("axx_name").setValue(nombre);
+      return;
+    }
+  }
+}
+
+function defaultname() {
+  if (Xrm.Page.getAttribute("axx_name").getValue() == null) {
+    Xrm.Page.getAttribute("axx_name").setValue("New");
+  }
+}
+
+function suspprogramadaalcargar() {
+  Xrm.Page.getControl("axx_suspender_hasta").setDisabled(true);
+  if (Xrm.Page.getAttribute("axx_flagsuspensionprogramadaactivada").getValue() == true) {
+    Xrm.Page.getControl("axx_flagsuspensionprogramadaactivada").setDisabled(false);
+    Xrm.Page.getControl("axx_suspender_desde").setDisabled(true);
+    Xrm.Page.ui.tabs.get("tab_5").setDisplayState("expanded");
+  } else {
+    Xrm.Page.getControl("axx_flagsuspensionprogramadaactivada").setDisabled(true);
+    Xrm.Page.getControl("axx_suspender_desde").setDisabled(false);
+    Xrm.Page.ui.tabs.get("tab_5").setDisplayState("collapsed");
+  }
+}
+
+function validarsuspprogramadaalguardar() {
+  var validacionMssg = "Validación de suspensión programada \n\n" + "Al ingresar una fecha inicial de suspesión debe ingresar también una fecha final.\n\n" + "No deben distanciarse más de 90 días.\n\n" + "La fecha inicial debe ser superior a la fecha actual.";
+  var hoy = new Date();
+  if (Xrm.Page.getAttribute("axx_suspender_desde").getValue() != null) {
+    var fechadesde = Xrm.Page.getAttribute("axx_suspender_desde").getValue();
+    var fechadesdemas90 = new Date(fechadesde.getTime() + 90 * 24 * 60 * 60 * 1000)
+  }
+  if (Xrm.Page.getAttribute("axx_suspender_hasta").getValue() != null) {
+    var fechahasta = Xrm.Page.getAttribute("axx_suspender_hasta").getValue();
+  }
+  if (fechadesde == null) {
+    return;
+  } else {
+    if ((fechadesde > hoy) & (fechahasta != null) & (fechahasta > fechadesde) & (fechadesdemas90 > fechahasta)) {
+      //alert("La suspensión automática se encuentra activada");
+      Xrm.Page.getControl("axx_flagsuspensionprogramadaactivada").setDisabled(false);
+      Xrm.Page.getAttribute("axx_flagsuspensionprogramadaactivada").setValue(true);
+    } else {
+      alert(validacionMssg);
+      event.returnValue = false;
+    }
+  }
+}
+
+function desactivarsuspprogramada() {
+  if (Xrm.Page.getAttribute("axx_flagsuspensionprogramadaactivada").getValue() == false) {
+    var answer = confirm("La suspension programada está activa. ¿Desea cancelarla?");
+    if (answer) {
+      Xrm.Page.getControl("axx_suspender_desde").setDisabled(false);
+      Xrm.Page.getAttribute("axx_suspender_desde").setValue(null);
+      Xrm.Page.getAttribute("axx_suspender_desde").setSubmitMode("always");
+      Xrm.Page.getAttribute("axx_suspender_hasta").setSubmitMode("always");
+      Xrm.Page.getAttribute("axx_suspender_hasta").setValue(null);
+      Xrm.Page.data.entity.save();
+    } else {
+      Xrm.Page.getAttribute("axx_flagsuspensionprogramadaactivada").setValue(true);
+      Xrm.Page.getControl("axx_suspender_desde").setFocus(true);
+    }
+  }
+}
+
+function suspprogramadacambiofechadesde() {
+  if (Xrm.Page.getAttribute("axx_suspender_desde").getValue() != null) {
+    Xrm.Page.getControl("axx_suspender_hasta").setDisabled(false);
+  } else {
+    Xrm.Page.getControl("axx_suspender_hasta").setDisabled(true);
+  }
+}
+
+function cambiodirecprogramadaalcargar() {
+  Xrm.Page.getControl("axx_proximadireccion").setDisabled(true);
+  if (Xrm.Page.getAttribute("axx_proximadireccion").getValue() != null) {
+    Xrm.Page.getControl("axx_proximadireccion").setVisible(true)
+  } else {
+    Xrm.Page.getControl("axx_proximadireccion").setVisible(false)
+  }
+  if (Xrm.Page.getAttribute("axx_flagcambiodedireccionprogramadaactivada").getValue() == false) {
+    Xrm.Page.ui.tabs.get("tab_2").sections.get("tab_2_section_4").setVisible(false);
+  } else {
+    Xrm.Page.ui.tabs.get("tab_2").sections.get("tab_2_section_4").setVisible(true);
+  }
+  Xrm.Page.getControl("axx_proximadireccionvalidahasta").setDisabled(true);
+  if (Xrm.Page.getAttribute("axx_flagcambiodedireccionprogramadaactivada").getValue() == true) {
+    Xrm.Page.getControl("axx_flagcambiodedireccionprogramadaactivada").setDisabled(false);
+    Xrm.Page.getControl("axx_proximadireccionvalidadesde").setDisabled(true);
+  } else {
+    Xrm.Page.getControl("axx_flagcambiodedireccionprogramadaactivada").setDisabled(true);
+    Xrm.Page.getControl("axx_proximadireccionvalidadesde").setDisabled(true);
+  }
+}
+
+function validarcambiodirecprogramadaalguardar() {
+  var validacionMssg = "Validación de cambio de dirección programada \n\n" + "- Al ingresar una fecha inicial de cambio de dirección programada debe ingresar también una fecha final.\n\n" + "- No deben distanciarse más de 90 días. \n\n" + "- La fecha inicial deber superior a la fecha actual.";
+  var hoy = new Date();
+  var fechadesdemas90 = new Date();
+  if (Xrm.Page.getAttribute("axx_proximadireccionvalidadesde").getValue() != null) {
+    var fechadesde = Xrm.Page.getAttribute("axx_proximadireccionvalidadesde").getValue();
+    fechadesdemas90.setDate(fechadesde.getDate() + 90);
+  }
+  if (Xrm.Page.getAttribute("axx_proximadireccionvalidahasta").getValue() != null) {
+    var fechahasta = Xrm.Page.getAttribute("axx_proximadireccionvalidahasta").getValue();
+  }
+  if (fechadesde == null) {
+    return;
+  } else {
+    if ((fechadesde > hoy) & (fechahasta != null) & (fechahasta > fechadesde) & (fechadesdemas90 > fechahasta)) {
+      //alert("La suspensión automática se encuentra activada");
+      Xrm.Page.getControl("axx_flagcambiodedireccionprogramadaactivada").setDisabled(false);
+      Xrm.Page.getAttribute("axx_flagcambiodedireccionprogramadaactivada").setValue(true);
+    } else {
+      alert(validacionMssg);
+      event.returnValue = false;
+    }
+  }
+}
+
+function desactivarcambiodirecprogramada() {
+  if (Xrm.Page.getAttribute("axx_flagcambiodedireccionprogramadaactivada").getValue() == false) {
+    var answer = confirm("La suspension programada está activa. ¿Desea cancelarla?");
+    if (answer) {
+      Xrm.Page.getControl("axx_proximadireccionvalidadesde").setDisabled(true);
+      Xrm.Page.getAttribute("axx_proximadireccionvalidadesde").setValue(null);
+      Xrm.Page.getAttribute("axx_proximadireccionvalidahasta").setSubmitMode("always");
+      Xrm.Page.getAttribute("axx_proximadireccionvalidahasta").setValue(null);
+      Xrm.Page.getAttribute("axx_proximadireccion").setSubmitMode("always");
+      Xrm.Page.getAttribute("axx_proximadireccion").setValue(null);
+      Xrm.Page.data.entity.save();
+    } else {
+      Xrm.Page.getAttribute("axx_flagcambiodedireccionprogramadaactivada").setValue(true);
+      Xrm.Page.getControl("axx_proximadireccionvalidadesde").setFocus(true);
+    }
+  }
+}
+
+function cambiodirecprogramadacambiofechadesde() {
+  if (Xrm.Page.getAttribute("axx_proximadireccionvalidadesde").getValue() != null) {
+    Xrm.Page.getControl("axx_proximadireccionvalidahasta").setDisabled(true);
+  } else {
+    Xrm.Page.getControl("axx_proximadireccionvalidahasta").setDisabled(true);
+  }
+}
+
+function checkenviodiferenciado() {    
+  var envioDiferenciado =   Xrm.Page.getAttribute("axx_enviodiferenciado").getValue();
+  var ContactoParaEnviar =  Xrm.Page.getAttribute("axx_enviaracontacto").getValue();
+  
+  if (envioDiferenciado){
+    Xrm.Page.getControl("axx_enviaracontacto").setDisabled(false);
+    Xrm.Page.getControl("axx_enviaracontacto1").setDisabled(false);
+    Xrm.Page.getAttribute("axx_enviaracontacto").setRequiredLevel("required");
+    
+  }else{
+    Xrm.Page.getAttribute("axx_enviaracontacto").setValue(null);
+    Xrm.Page.getControl("axx_enviaracontacto").setDisabled(true);
+    Xrm.Page.getControl("axx_enviaracontacto1").setDisabled(true);
+    Xrm.Page.getAttribute("axx_enviaracontacto").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_enviaracontacto").setRequiredLevel("none");
+  }
+}
+
+function formatearFechasProgramadas() {
+  var fechaDesde = Xrm.Page.getAttribute("axx_suspender_desde").getValue();
+  var fechaHasta = Xrm.Page.getAttribute("axx_suspender_hasta").getValue();
+  var hoyCero = new Date();
+  hoyCero.setHours(0, 0, 0, 0);
+  var ultimoDia = new Date(hoyCero);
+  ultimoDia.setMonth(ultimoDia.getMonth() + 1);
+  ultimoDia.setDate(0);
+  if (fechaDesde) {
+    if (fechaDesde < ultimoDia) {
+      fechaDesde = new Date(ultimoDia);
+      fechaDesde.setDate(fechaDesde.getDate() + 1);
+    } else {
+      fechaDesde.setDate(1);
+    }
+  }
+  if (fechaHasta) {
+    if (fechaHasta <= fechaDesde) {
+      fechaHasta = new Date(fechaDesde)
+      fechaHasta.setMonth(fechaHasta.getMonth() + 1);
+      fechaHasta.setDate(0);
+    } else {
+      fechaHasta.setMonth(fechaHasta.getMonth() + 1);
+      fechaHasta.setDate(0);
+    }
+  }
+  if (fechaDesde && fechaHasta) {
+    var fechaDesdeMas3Meses = new Date(fechaDesde);
+    fechaDesdeMas3Meses.setMonth(fechaDesdeMas3Meses.getMonth() + 3);
+    if (fechaDesdeMas3Meses < fechaHasta) {
+      alert("La diferencia entre fechas no puede ser mayor a 3 meses.");
+      fechaHasta = new Date(fechaDesde);
+      fechaHasta.setMonth(fechaHasta.getMonth() + 1);
+      fechaHasta.setDate(0);
+    }
+  }
+  Xrm.Page.getAttribute("axx_suspender_desde").setValue(fechaDesde);
+  Xrm.Page.getAttribute("axx_suspender_hasta").setValue(fechaHasta);
+}
+
+function switchModoDePago() {
+  //Pago Unico=  Debito: 0, Unico: 1
+  var getAtt = Xrm.Page.getAttribute;
+  //setear cuotas en null si está elegido PagoUnico y habilitar el campo.
+  if (getAtt("axx_pagounico").getValue() == 1)
+  {
+    getAtt("axx_cuotas").setValue(null);
+    getAtt("axx_cuotas").setRequiredLevel("required");
+    Xrm.Page.getControl("axx_cuotas").setDisabled(false);
+  }
+  else
+  {
+    getAtt("axx_cuotas").setValue("1");
+    getAtt("axx_cuotas").setSubmitMode("always");
+    getAtt("axx_cuotas").setRequiredLevel("none");
+    Xrm.Page.getControl("axx_cuotas").setDisabled(true);
+  }
+}
+
+function habilitarBuscarDireccion(){
+  var envioDiferenciado = Xrm.Page.getAttribute("axx_enviodiferenciado").getValue();
+  var Customerfield;
+  var customerType;
+      
+  if (envioDiferenciado){
+    var Customerfield = "axx_enviaracontacto";
+    var customerType =  2;    
+  }else{
+    var tipoDeCliente = Xrm.Page.getAttribute("axx_tipodecliente").getValue();
+    var Customerfield = (tipoDeCliente == 0) ? "axx_contactid" : "axx_accountid";
+    var customerType =  (tipoDeCliente == 0) ? 2 : 1;
+  }
+
+  var hasCustomer =  ((Xrm.Page.getAttribute(Customerfield).getValue()) && ( Xrm.Page.getAttribute(Customerfield).getValue()[0] ) );
+  var readOnlyForm = ((Xrm.Page.ui.getFormType() != 1) && (Xrm.Page.ui.getFormType() != 2) );
+  
+  if(!readOnlyForm && hasCustomer){
+    getButton("WebResource_BuscarDireccion").Enable();
+  }else{
+    getButton("WebResource_BuscarDireccion").Disable();
+  }
+}
+
+function getButton(webResource){
+	return getIFrame(webResource).crmButton;
+}
+
+function getIFrame(webResource){
+	var control = Xrm.Page.ui.controls.get(webResource);  
+	var id      = control.getObject().id;
+	var frame   = document.frames[id];
+	return frame;
+}

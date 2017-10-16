@@ -1,0 +1,92 @@
+<root>
+  <node attrId="axx_AreaPlusDireccion" text="CAC - In" value="282270002">
+    <node attrId="axx_Categoria" text="Anulación" value="282270001">
+      <node attrId="axx_SubCategoria" text="Arrepentido" value="282270000" />
+      <node attrId="axx_SubCategoria" text="Disconforme Comercial" value="282270008" />
+      <node attrId="axx_SubCategoria" text="Disconforme Servicio" value="282270009" />
+      <node attrId="axx_SubCategoria" text="Económico" value="282270010" />
+      <node attrId="axx_SubCategoria" text="Fallecido" value="282270013" />
+      <node attrId="axx_SubCategoria" text="Salud" value="282270036" />
+      <node attrId="axx_SubCategoria" text="Sin Motivo" value="282270040" />
+      <node attrId="axx_SubCategoria" text="Viaje" value="282270044" />
+    </node>
+    <node attrId="axx_Categoria" text="Consulta" value="282270004">
+      <node attrId="axx_SubCategoria" text="Facturación" value="282270012" />
+      <node attrId="axx_SubCategoria" text="Producto" value="282270031" />
+      <node attrId="axx_SubCategoria" text="Venta (Vouchers / Producto)" value="282270043" />
+    </node>
+    <node attrId="axx_Categoria" text="Modificación" value="282270012">
+      <node attrId="axx_SubCategoria" text="Cambio Domicilio Definitivo" value="282270002" />
+      <node attrId="axx_SubCategoria" text="Cambio Domicilio Por Única Vez" value="282270003" />
+      <node attrId="axx_SubCategoria" text="Datos Personales" value="282270006" />
+      <node attrId="axx_SubCategoria" text="Medio De Pago" value="282270019" />
+    </node>
+    <node attrId="axx_Categoria" text="Reclamo" value="282270023">
+      <node attrId="axx_SubCategoria" text="Entrega" value="282270011" />
+      <node attrId="axx_SubCategoria" text="Facturación" value="282270012" />
+      <node attrId="axx_SubCategoria" text="Gestión Ya Realizada" value="282270016" />
+      <node attrId="axx_SubCategoria" text="Producto" value="282270031" />
+    </node>
+  </node>
+  <node attrId="axx_AreaPlusDireccion" text="Call - In" value="282270000">
+    <node attrId="axx_Categoria" text="Broma" value="282270003" />
+    <node attrId="axx_Categoria" text="No Quiere Pagar El Interés" value="282270015" />
+    <node attrId="axx_Categoria" text="No Tiene La Tarjeta A Mano" value="282270016" />
+    <node attrId="axx_Categoria" text="Quiere Ver Personalmente" value="282270021" />
+    <node attrId="axx_Categoria" text="Se Cortó" value="282270025" />
+    <node attrId="axx_Categoria" text="Tiempos De Entrega Muy Extensos" value="282270029" />
+    <node attrId="axx_Categoria" text="Venta  =D" value="282270030" />
+    <node attrId="axx_Categoria" text="Venta Diferida" value="282270031" />
+    <node attrId="axx_Categoria" text="Ya Compró" value="282270036">
+      <node attrId="axx_SubCategoria" text="Por Internet" value="282270030" />
+      <node attrId="axx_SubCategoria" text="Por Call" value="282270029" />
+    </node>
+    <node attrId="axx_Categoria" text="Equivocado" value="282270007" />
+    <node attrId="axx_Categoria" text="Participar En Concurso" value="282270019" />
+    <node attrId="axx_Categoria" text="Reclamo Para El CAC" value="282270024">
+      <node attrId="axx_SubCategoria" text="Derivado" value="282270007" />
+      <node attrId="axx_SubCategoria" text="No Derivado" value="282270020" />
+    </node>
+  </node>
+  <node attrId="axx_AreaPlusDireccion" text="CAC - Out" value="282270003">
+    <node attrId="axx_Categoria" text="Venta  =D" value="282270030" />
+    <node attrId="axx_Categoria" text="Falleció" value="282270009" />
+    <node attrId="axx_Categoria" text="Interesado / Volver A Llamar" value="282270011" />
+    <node attrId="axx_Categoria" text="No Aplica" value="282270013">
+      <node attrId="axx_SubCategoria" text="Broma" value="282270001" />
+      <node attrId="axx_SubCategoria" text="Dato Repetido" value="282270005" />
+      <node attrId="axx_SubCategoria" text="Fuera De Zona Geográfica" value="282270015" />
+      <node attrId="axx_SubCategoria" text="Prueba" value="282270032" />
+      <node attrId="axx_SubCategoria" text="Reclamo CAC" value="282270035" />
+      <node attrId="axx_SubCategoria" text="Se Mudaron" value="282270038" />
+    </node>
+    <node attrId="axx_Categoria" text="No Interesado  = (" value="282270014">
+      <node attrId="axx_SubCategoria" text="Creyó Que Era Gratis (News)" value="282270004" />
+      <node attrId="axx_SubCategoria" text="Faltante De Stock (Producto)" value="282270014" />
+      <node attrId="axx_SubCategoria" text="Le Parece Caro" value="282270017" />
+      <node attrId="axx_SubCategoria" text="Mala Experiencia Con El Negocio" value="282270018" />
+      <node attrId="axx_SubCategoria" text="No Le Interesó Ningún Producto" value="282270021" />
+      <node attrId="axx_SubCategoria" text="No Manejamos Su Forma De Pago" value="282270022" />
+      <node attrId="axx_SubCategoria" text="No Permite Presentación" value="282270023" />
+      <node attrId="axx_SubCategoria" text="No Quiere Pagar El Gasto De Envío" value="282270024" />
+      <node attrId="axx_SubCategoria" text="No Quiere Pasar Datos Por Teléfono" value="282270025" />
+      <node attrId="axx_SubCategoria" text="No Quiere Una Suscripción Mensual" value="282270026" />
+      <node attrId="axx_SubCategoria" text="No Tiene Dinero" value="282270027" />
+      <node attrId="axx_SubCategoria" text="No Toma Vino" value="282270028" />
+      <node attrId="axx_SubCategoria" text="Quiere Seleccionar Los Vinos" value="282270033" />
+      <node attrId="axx_SubCategoria" text="Quiere Ver El Producto Personalmente" value="282270034" />
+      <node attrId="axx_SubCategoria" text="Se Arrepintió" value="282270037" />
+      <node attrId="axx_SubCategoria" text="Se Va De Viaje" value="282270039" />
+      <node attrId="axx_SubCategoria" text="Solo Quería Información" value="282270041" />
+      <node attrId="axx_SubCategoria" text="Tiempos De Entrega Muy Extensos" value="282270042" />
+      <node attrId="axx_SubCategoria" text="Ya Compró" value="282270045" />
+    </node>
+    <node attrId="axx_Categoria" text="Ocupado / No Contesta" value="282270017" />
+    <node attrId="axx_Categoria" text="Ocupado / No Contesta 3er Intento" value="282270018" />
+    <node attrId="axx_Categoria" text="Teléfono Erróneo" value="282270028" />
+    <node attrId="axx_Categoria" text="Volver A Llamar" value="282270032" />
+    <node attrId="axx_Categoria" text="Volver A Llamar 3er Intento" value="282270033" />
+    <node attrId="axx_Categoria" text="Volver A Llamar Am" value="282270034" />
+    <node attrId="axx_Categoria" text="Volver A Llamar Pm" value="282270035" />
+  </node>
+</root>

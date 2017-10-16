@@ -1,0 +1,52 @@
+function defaultContacto()
+{
+  document.getElementById("regardingobjectid").setAttribute("defaulttype", "2");
+}
+
+
+RegExp.escape = function(text) {
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+}
+
+function onChangeTipo(){
+  var aTipo = Xrm.Page.getAttribute("axx_tipo");
+  var aSubject = Xrm.Page.getAttribute("subject");
+  var sV = (aSubject.getValue()) ? aSubject.getValue() : "";
+  var tV = aTipo.getText();
+  
+  var initialATipo = aTipo.getInitialValue();
+  initialATipo = (initialATipo) ? aTipo.getOption(initialATipo).text : "";
+  
+  var valorAnterior = (typeof (previousTipo) != "undefined") ? previousTipo : initialATipo;
+      valorAnterior = (valorAnterior) ? valorAnterior : "";
+  
+  var separador = " - ";
+  
+  var valorAnteriorEsc = RegExp.escape(valorAnterior);
+  var initExpression = new RegExp(valorAnteriorEsc + separador, "i");
+  
+  if(sV.search(initExpression)>=0){
+      sV = sV.replace(initExpression, tV + separador);
+  }else{
+      initExpression = new RegExp(valorAnteriorEsc, "i");
+      if(sV.search(initExpression)>=0){  
+        sV = sV.replace(initExpression, tV + separador);
+      }else{
+        if (sV == ""){
+          sV = tV;
+        }else{
+          sV = tV + separador + sV;
+        }
+      }
+  }
+  if(sV.search(separador)==0){
+    sV = sV.replace(separador, "");
+  }
+  var svLength = sV.length;
+  if(sV.substring(svLength-separador.length, svLength)==separador){
+    sV = sV.substring(0, sV.length-separador.length);
+  }
+  
+  aSubject.setValue(sV);
+  previousTipo = tV;
+}

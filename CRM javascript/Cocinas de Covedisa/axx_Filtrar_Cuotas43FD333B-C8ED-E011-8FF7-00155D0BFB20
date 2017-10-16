@@ -1,0 +1,212 @@
+function filtrarCuotas(eContext){
+  
+  //Deselecionar la cantidad de cuotas si se cambió la Forma de Pago
+  if (eContext){ 
+    eventSource = eContext.getEventSource();
+    if (eventSource.getName() && eventSource.getName() == "axx_formadepago"){
+      Xrm.Page.getAttribute("axx_cuotas").setValue(null);
+    }  
+  }
+
+  var formaDePago = Xrm.Page.getAttribute("axx_formadepago").getValue();
+  
+  if ( formaDePago == null){
+    //Si no hay forma de pago, No Dejar Opciones en Cuotas.    
+    //dejarOpciones("axx_cuotas");    
+    vaciarPickListCuotas();
+  }else{
+    //Obtener las cuotas que corresponden.
+    getCuotas();
+  }
+}
+
+function vaciarPickListCuotas(addone){		
+	//Xrm.Page.getAttribute("axx_cuotas").setValue(null);
+	vaciarOpciones(crmForm.all.axx_cuotas, "axx_cuotas");
+    var arrayCuotas = new Array();
+    if(addone != undefined){
+    	arrayCuotas.push("1");
+    }
+    dejarOpcionesArray("axx_cuotas", arrayCuotas);
+    if(addone != undefined){
+    	Xrm.Page.getAttribute("axx_cuotas").setValue("1");
+    }
+}
+
+enablePagoUnico = function(){
+  //Pago Unico=  Debito: 0, Unico: 1
+  
+  //Si existe el campo es porque la entidad es Suscripción:
+  if(Xrm.Page.getControl("axx_pagounico")){ 
+    if (typeof global_enablePagoUnico == "undefined"){window.setTimeout("enablePagoUnico",250); return}
+    
+    var getAtt = Xrm.Page.getAttribute;
+    var esChange = (  getAtt("axx_formadepago") && getAtt("axx_formadepago")[0] ) ? false : true;
+    
+    if(global_enablePagoUnico)
+    {
+      //habilitar el campo pago unico.
+      Xrm.Page.getControl("axx_pagounico").setDisabled(false);
+      //habilitar el campo cuotas.
+      Xrm.Page.getControl("axx_cuotas").setDisabled(false);
+      
+      if (esChange)
+      {
+        //setear cuotas en null si está elegido PagoUnico y habilitar el campo.
+        if (getAtt("axx_pagounico").getValue() == 1)
+        {
+          getAtt("axx_cuotas").setValue(null);
+          Xrm.Page.getControl("axx_cuotas").setDisabled(false);
+        }else{
+          getAtt("axx_cuotas").setValue("1");          
+          Xrm.Page.getControl("axx_cuotas").setDisabled(true);
+        }
+      }
+    }
+    else
+    {
+      //deshabilitar el campo pago unico
+      Xrm.Page.getControl("axx_pagounico").setDisabled(true);
+      //deshabilitar el campo cuotas
+      Xrm.Page.getControl("axx_cuotas").setDisabled(true);
+      if (esChange)
+      {
+        //setear cuotas en 1 y forzar el guardado.
+        getAtt("axx_cuotas").setValue("1");
+        getAtt("axx_cuotas").setSubmitMode("always");
+        //setear el campo pagounico en Debito y forzar el guardado.
+        getAtt("axx_pagounico").setValue(0);
+        getAtt("axx_pagounico").setSubmitMode("always");
+      }
+    }
+  }
+}
+
+function getCuotas(){
+
+  var errorMssg = "alerta!";
+                  
+  var FormadePagoId = Xrm.Page.getAttribute("axx_formadepago");
+  FormadePagoId = (FormadePagoId.getValue()) ? FormadePagoId.getValue()[0].id : null;
+  
+  if (!FormadePagoId){return}
+  
+  var organizationName = Xrm.Page.context.getOrgUniqueName();
+  var serverURL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/" + organizationName ;
+
+  var odataSelect = serverURL + "/xrmservices/2011/OrganizationData.svc/axx_formadepagocuotasSet?$select=axx_CoeficienteFinanciero,axx_Cuotas&$" + 
+                                "filter=axx_FormadePago/Id eq guid'" + FormadePagoId + "'";
+
+  $.ajax({
+         type: "GET",
+         contentType: "application/json; charset=utf-8",
+         datatype: "json",
+         url: odataSelect,
+         beforeSend: function (XMLHttpRequest) { XMLHttpRequest.setRequestHeader("Accept", "application/json"); },
+         success: function (data, textStatus, XmlHttpRequest)
+             {
+                 Xrm.Page.getControl("axx_cuotas").setDisabled(false);
+                 
+                 if(data.d.results.length == 0){
+                    //alert(errorMssg); 
+                     vaciarPickListCuotas(true);
+                     enablePagoUnico();
+                    return
+                 }
+                 ProcessReturnedEntities(data.d.results);
+                 enablePagoUnico();
+             },
+         error: function (XmlHttpRequest, textStatus, errorThrown) { alert('OData Select Failed: ' + odataSelect); }
+     }); 
+}
+
+function ProcessReturnedEntities(ManyEntities)
+{
+  vaciarPickListCuotas();
+  var arrayCuotas = new Array();
+  arrayCuotasAndCoeficiente = new Array();
+  
+  for( i=0; i< ManyEntities.length; i++)
+  {
+    var oneEntity = ManyEntities[i];
+    arrayCuotas.push(oneEntity.axx_Cuotas);
+    arrayCuotasAndCoeficiente.push({"cuota": oneEntity.axx_Cuotas,"coeficiente":parseFloat(oneEntity.axx_CoeficienteFinanciero)});
+  }
+  dejarOpcionesArray("axx_cuotas",arrayCuotas);
+
+  if(ManyEntities.length == 1)
+  {
+    var Opc = Xrm.Page.getControl("axx_cuotas").getAttribute().getOptions();
+    for(i=0; i < Opc.length; i++)
+    {
+     if(Opc[i].text == ManyEntities[0].axx_Cuotas)
+     {
+       Xrm.Page.getAttribute("axx_cuotas").setValue(parseInt(Opc[i].value));
+       break;
+     }
+    }
+  }
+}
+
+
+function ListToArray(str)
+{
+    var temp = new Array();
+    var dest = new Array();
+    // this will return an array with strings "1", "2", etc.
+    temp = str.split(",");
+
+    var dash = new Array();
+
+    for (a in temp ) {
+      if (temp[a].search("-") >= 0){
+          dash = temp[a].split("-");
+          for(i = parseInt(dash[0]); i <= parseInt(dash[1]); i++){
+            dest.push(i);
+          }
+      }else{
+        dest.push(parseInt(temp[a]));
+      }
+    }
+
+    dest.sort(sortNumber);
+    
+    for (j = 0; j < dest.length; j++){
+      if ( isNaN(dest[j]) || (dest[j] == dest[j-1])){
+        dest.splice(j,1);
+        j--;
+      }
+    }
+
+  return dest
+}
+
+function parsearCuotas()
+{
+  var str = Xrm.Page.getAttribute("axx_cuotas").getValue();
+  var cuotasSeparadas = Xrm.Page.getAttribute("axx_cuotasseparadosporcomas");
+  cuotasSeparadas.setSubmitMode("always");
+
+  if (str != null && str != ""){
+    var Arr = ListToArray(str);
+    var dest = "";
+    
+    if (Arr.length > 0){
+      for (a in Arr)
+      {
+        dest = dest + Arr[a] + ", ";
+      }
+      dest = dest.substring(0,(dest.length-2));
+      cuotasSeparadas.setValue(dest);
+    }else{
+      cuotasSeparadas.setValue(null);
+    }
+  }else{
+    cuotasSeparadas.setValue(null);
+  }
+}
+
+function sortNumber(a,b)
+{
+  return a - b
+}

@@ -1,0 +1,7 @@
+function Contracargos(){	
+	Xrm.Page.getAttribute("axx_pedido").setSubmitMode("always");
+	Xrm.Page.getAttribute("axx_categoria").setSubmitMode("always");
+	Xrm.Page.getAttribute("axx_contracargo").setSubmitMode("always");	
+	Xrm.Page.getAttribute("axx_contracargo").setValue(true);
+	Xrm.Page.data.entity.save();
+}

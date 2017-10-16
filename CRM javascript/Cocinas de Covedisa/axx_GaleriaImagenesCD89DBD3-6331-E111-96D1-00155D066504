@@ -1,0 +1,212 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">  
+<html xmlns="http://www.w3.org/1999/xhtml">  
+<head>  
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />  
+<title>Galeria de Productos</title>  
+
+<SCRIPT src="../../ClientGlobalContext.js.aspx"></SCRIPT>
+
+<SCRIPT language=jscript type=text/jscript>
+
+    function getDataParam()
+    {   //Get the any query string parameters and load them
+        //into the vals array
+        var URLImagenes = null;
+        var vals = new Array();
+        if (location.search != "")
+        {
+            vals = location.search.substr(1).split("&");
+            for (var i in vals)
+            {
+                vals[i] = vals[i].replace(/\+/g, " ").split("=");
+            }
+            //look for the parameter named 'data'
+            var found = false;
+            for (var i in vals)
+            {
+                if (vals[i][0].toLowerCase() == "data")
+                {
+                    URLImagenes = parseDataValue(vals[i][1]);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            { noParams(); }
+        }
+        else
+        {
+            noParams();
+        }
+            
+        return URLImagenes;
+    }
+
+    function parseDataValue(datavalue)
+    {   
+        var URLImagenes = null;
+            
+        if (datavalue != "")
+        {
+            var vals = new Array();
+            vals = decodeURIComponent(datavalue).split("&");
+                
+            for (var i in vals)
+            {
+                vals[i] = vals[i].replace(/\+/g, " ");
+            }
+
+                URLImagenes = {
+                Repositorio: (vals[0]) ? vals[0] : ""
+                //Imagen2: (vals[1]) ? vals[1] : "",
+                //Imagen3: (vals[2]) ? vals[2] : ""
+                //Tip: (vals[3]) ? vals[4] : ""
+            }
+        }
+        else
+        {
+            noParams();
+        }
+        return URLImagenes;
+    }
+
+    function noParams()
+    {
+        alert("No data parameter was passed to this web resource");
+    }
+</SCRIPT>
+
+<script type="text/jscript" >  
+//Configuro las variables por defecto
+var ventana;
+var cont = 0;
+var titulopordefecto = "Imagen de Producto";
+
+//Cargo los parametros de CRM
+var URLImagenes = getDataParam();
+
+//Llamo a la funcion que me devuelve las URL
+misImagenes= new Array();
+parent.InformacionProducto(URLImagenes);
+
+//misImagenes[0] = URLImagenes.Imagen1;
+//misImagenes[1] = URLImagenes.Imagen2;
+//misImagenes[2] = URLImagenes.Imagen3;  
+
+var i = 0;
+
+//funcion de carga de la primera imagen  
+function cargarImagen(){
+    document.imgSrc.src = misImagenes[i];
+    //cambiarTamanio();
+}
+
+//Mueve a la imagen anterior
+function anterior(){  
+  if(i<1){  
+    var NumImagen = i;  
+  } else {  
+    var NumImagen = i-=1;  
+  }
+    document.imgSrc.src = misImagenes[NumImagen];
+}  
+
+//Mueve a la imagen siguiente
+function siguiente(){  
+  if(i>1){  
+    var NumImagen = i;  
+  } else {  
+    var NumImagen = i+=1;  
+  }
+    document.imgSrc.src = misImagenes[NumImagen];
+}
+
+//Controla el tamaño de las imagenes
+function cambiarTamanio() {
+    var imagen = document.getElementById("imgSrc");
+    imagen.width = 300;
+    imagen.height = 200;
+}
+
+//Abre la imagen un una ventana
+ function abrirImagen(imagenAbrir, titulo){
+	if(cont==1)
+	{
+		ventana.close();
+		ventana=null;
+	}
+	if(titulo==null)
+	{
+		titulo=titulopordefecto;
+	}
+ 
+  var screenWidth = screen.availWidth;
+  var alto = 500;
+  var ancho = 500;
+  var windowPosition = "top=80,left=" + ((screenWidth-ancho)/2);
+  var windowSize = "width=" + ancho + ",height=" + alto;
+  
+  var features = 'resizable,scrollbars=no,location=no' + windowPosition + ',' + windowSize;
+	ventana=window.open('','Ventana', features);
+	
+  ventana.document.write('<html><head><title>' + titulo + '</title></head>' +
+                          '<body style="overflow:hidden" marginwidth="0" marginheight="0" topmargin="0" bottommargin="0" leftmargin="0" rightmargin="0" scroll="no" onUnload="opener.cont=0">' + 
+                          '<img alt="Imagen no Disponible" src="' + imagenAbrir + '" width=' + ancho + ' onclick="this.close()" >' +
+                          '<br>' +
+                          '<div align="center">' +
+                            '<a href="javascript:this.close()">cerrar</a>' +
+                          '</div>' + 
+                          '</body>'
+                        );
+  ventana.document.close();
+	cont++;
+ }
+ 
+ //redimensiono la ventana y la imagen
+ function redimensionar(ancho, alto)
+ {
+ ventana.resizeTo(ancho+12,alto+50);
+ ventana.moveTo((screen.width-ancho)/2,(screen.height-alto)/2); //centra la ventana. Eliminar si no se quiere centrar el popup
+ }
+ 
+ 
+//Llamar a la función
+//window.onload = cargarImagen;  
+
+</script>  
+<style type="text/css">  
+body {  
+    margin-top:0px;  
+    margin-botton:0px;  
+    margin-left:0px;  
+    margin-right:0px;  
+}  
+td a {  
+    font:9px Verdana, Arial, Helvetica, "sans-serif";  
+    color:#FFFFFF;  
+    text-decoration:none;  
+</style>  
+</head>  
+<body>
+  <div>
+    <table border="0" cellspacing="0" cellpadding="0" style="background:#666; width:100%; margin: auto;">  
+      <tr>
+        <td align="center"><a href="#" onclick="anterior();"> << Anterior</a></td>  
+        <td align="center"><a href="#" onclick="siguiente();">Siguiente >> </a></td>  
+      </tr>  
+      <tr>
+        <td colspan="2" align="center" height="400px"><a href="javascript:abrirImagen(document.imgSrc.src,'Galeria de Imagen')">
+          <img name="imgSrc" id="imgSrc" alt="Imagen no Disponible"  style="border-width:0px;" width="400px">  </a>
+        </td>  
+      </tr>  
+    </table>
+<!--     
+    <div style="margin: auto;">  
+      <a href="javascript:abrirImagen(document.imgSrc.src,'Imagen del Producto')" style="border-width:0px"> 
+        <img name="imgSrc" id="imgSrc" alt="Imagenes de la galeria" style="border-width:0px;width:320px">  
+      </a>
+    </div> 
+-->
+  </div>
+</body>  
+</html>

@@ -1,0 +1,13 @@
+function SetName()
+{
+ var NegocioName = Xrm.Page.getAttribute("axx_negocioname").getValue();
+ var Prefix = Xrm.Page.getAttribute("axx_prefijo").getValue();
+ var Name;
+ 
+ NegocioName = NegocioName.replace(/^\s*|\s*$/g,"");
+ Prefix = Prefix.replace(/^\s*|\s*$/g,"");
+ Name = NegocioName + " (" + Prefix + ")";
+ 
+ Xrm.Page.getAttribute("axx_name").setValue(Name);
+ Xrm.Page.getAttribute("axx_name").setSubmitMode("always");
+}

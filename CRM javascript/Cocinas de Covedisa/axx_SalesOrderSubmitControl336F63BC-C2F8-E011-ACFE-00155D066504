@@ -1,0 +1,19 @@
+function CheckPayment(ExecutionObj)
+{
+ if(ExecutionObj.getEventArgs().getSaveMode() == 19) //Se hace SubmitOrder.
+ {
+  if(Xrm.Page.getAttribute('axx_paymentstatus').getValue() != null)
+  {
+   if(Xrm.Page.getAttribute('axx_paymentstatus').getSelectedOption().text != 'Pago') //No está pago.
+   {
+    ExecutionObj.getEventArgs().preventDefault();
+    alert('No se puede realizar la acción hasta que no se complete el pago del pedido.');
+   }
+  }
+  else //No se especificó el pago.
+  {
+   ExecutionObj.getEventArgs().preventDefault();
+   alert('No se puede realizar la acción hasta que no se complete el pago del pedido.');
+  }
+ }
+}

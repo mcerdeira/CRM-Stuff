@@ -1,0 +1,91 @@
+function onChangeTipoCantidadEntregadas(){	
+	var tipo = Xrm.Page.getAttribute("axx_tipo").getValue(); //Abierta:True Cerrada:False
+	var requiredLevel = (!(tipo)) ? "required" : "none";	
+    Xrm.Page.getAttribute("axx_cantidaddeentregas").setRequiredLevel(requiredLevel);
+    Xrm.Page.ui.controls.get("axx_cantidaddeentregas").setDisabled((requiredLevel == "none"));
+    if(requiredLevel == "none"){
+        Xrm.Page.getAttribute("axx_cantidaddeentregas").setValue(null);
+  	}
+}
+
+function SetEnterprisePercentage(isLoad)
+{
+ var ModCont = Xrm.Page.getAttribute('axx_modelodecontratacion').getValue();
+ var EntPrc = Xrm.Page.getAttribute('axx_porcentajeempresa');
+ var EntPrcCtrl = Xrm.Page.getControl('axx_porcentajeempresa');
+ 
+ if(!isLoad)
+ {
+   EntPrc.setSubmitMode("always");
+   
+   if(ModCont != null)
+   {
+    switch(ModCont)
+    {
+      case 0: //Mixto.
+        EntPrc.setValue(null);
+        EntPrcCtrl.setDisabled(false);
+        break;
+      case 1: //Corporativo.
+        EntPrc.setValue(100);
+        EntPrcCtrl.setDisabled(true);
+        break;
+      case 2: //Individuo.
+        EntPrc.setValue(0);
+        EntPrcCtrl.setDisabled(true);
+        break;
+    }
+   }
+   else
+   {
+    EntPrc.setValue(null);
+    EntPrcCtrl.setDisabled(true);
+   }
+ }
+ else
+ {
+  switch(ModCont)
+  {
+    case 0: //Mixto.
+      EntPrcCtrl.setDisabled(false);
+      break;
+    default :
+      EntPrcCtrl.setDisabled(true);
+      break;
+  }
+ }
+}
+
+function ValidateEnterprisePercentage(ExCont)
+{
+ var ModCont = Xrm.Page.getAttribute('axx_modelodecontratacion').getValue();
+ var EntPrc = Xrm.Page.getAttribute('axx_porcentajeempresa').getValue();
+ 
+ if(EntPrc != null)
+ {
+  if(ModCont == 0 && (EntPrc < 1 || EntPrc > 99)) //Modelo de contratación = Mixto y porcentaje incorrecto.
+  {
+   if(ExCont.getEventArgs() != null)
+     ExCont.getEventArgs().preventDefault(); //Cancelo el guardado.
+  
+   alert('Para modelo de contratación \'Mixto\' el porcentaje debe estar entre 1 y 99.');
+  }
+ }
+}
+
+function SetProgramState()
+{
+ if(Xrm.Page.ui.getFormType() != 1)
+  Xrm.Page.getControl("axx_programaid").setDisabled(true);
+
+ if(Xrm.Page.getAttribute("axx_programaid").getValue() != null)
+ {
+   Xrm.Page.getControl("new_valor").setDisabled(true);
+   Xrm.Page.getAttribute("new_valor").setSubmitMode("always");
+ }
+ else
+ {
+   Xrm.Page.getControl("new_valor").setDisabled(false);
+ }
+ //Xrm.Page.getAttribute("axx_programaid").setSubmitMode("always");
+}

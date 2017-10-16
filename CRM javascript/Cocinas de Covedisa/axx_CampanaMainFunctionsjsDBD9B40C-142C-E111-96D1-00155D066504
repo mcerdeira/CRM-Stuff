@@ -1,0 +1,412 @@
+function promoDefaultOnLoad()
+{
+  if (Xrm.Page.ui.getFormType()==1)
+  {
+     Xrm.Page.getControl("axx_promociondefaultid").setDisabled(true);
+  }
+}
+
+function clearSubNegocio()
+{
+  var negocio = Xrm.Page.getAttribute("axx_negocio").getValue();
+  var borrarSubnegocio = false;
+  
+  if (typeof guidNegocioAnterior == "undefined")
+  {
+    borrarSubnegocio = true;
+    if(negocio && negocio[0])
+    {
+      guidNegocioAnterior = negocio[0].id;
+    }
+  }
+  else if (negocio && negocio[0])
+  {
+    if (negocio[0].id != guidNegocioAnterior)
+    {
+        borrarSubnegocio = true;
+    }
+    guidNegocioAnterior = negocio[0].id;
+  }
+  
+  if(borrarSubnegocio)
+  {
+    Xrm.Page.getAttribute("axx_subnegocio").setValue(null);
+    Xrm.Page.getAttribute("axx_centrodecostos").setValue(null);
+  }
+}
+
+function getCentroDeCostos()
+{
+  var errorMssg = "No existe un centro de costos para este subnegocio.\n" + 
+                  "Por favor, solicite que se de alta y asocie el Centro de Costos\n" + 
+                  "antes de usar el subnegocio actual.";
+  
+  var negocioId = Xrm.Page.getAttribute("axx_negocio");
+  negocioId = (negocioId.getValue()) ? negocioId.getValue()[0].id : null;
+  var subNegocioId = Xrm.Page.getAttribute("axx_subnegocio");
+  subNegocioId = (subNegocioId.getValue()) ? subNegocioId.getValue()[0].id : null;  
+  
+  if (!(negocioId && subNegocioId)){
+    Xrm.Page.getAttribute("axx_centrodecostos").setValue(null);
+    Xrm.Page.getAttribute("axx_centrodecostos").setSubmitMode("always");
+    return
+  }
+  
+  var organizationName = Xrm.Page.context.getOrgUniqueName();
+  var serverURL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/" + organizationName ;
+  var odataSelect = serverURL +   
+                    "/xrmservices/2011/OrganizationData.svc/axx_subnegocioSet?" + 
+                    "$select=axx_CentrodeCostosId&$filter=axx_subnegocioId eq guid'" +
+                    (subNegocioId.replace("{","")).replace("}","") + "'";                                
+  
+  $.ajax({
+    type: "GET",
+    contentType: "application/json; charset=utf-8",
+    datatype: "json",
+    url: odataSelect,
+    beforeSend: function (XMLHttpRequest) { XMLHttpRequest.setRequestHeader("Accept", "application/json"); },
+    success: function (data, textStatus, XmlHttpRequest)
+    {
+      // Use for a single selected entity
+      if(data.d.results.length == 0)
+      {
+        alert(errorMssg); 
+        Xrm.Page.getAttribute("axx_centrodecostos").setValue(null);
+        return
+      }
+      ProcessReturnedCDC(data.d.results[0]);
+    },
+    error: function (XmlHttpRequest, textStatus, errorThrown) { alert('OData Select Failed: ' + odataSelect); }
+  }); 
+}
+
+function ProcessReturnedCDC(OneEntity)
+{
+  var oneEntity = OneEntity;
+  var centroDeCostosId = oneEntity.axx_CentrodeCostosId.Id;
+  var centroDeCostosName = oneEntity.axx_CentrodeCostosId.Name;
+  
+  var lookupAttribute = Xrm.Page.getAttribute("axx_centrodecostos");
+  var olookup = new Object();
+  olookup.id = centroDeCostosId;
+  olookup.entityType = "axx_centrodecostos";
+  olookup.name = centroDeCostosName;
+  var olookupValue = new Array();
+  olookupValue[0] = olookup;
+  lookupAttribute.setValue(olookupValue);
+}
+
+function NotificacionCampaignCode() {
+    var notificationsArea = document.getElementById('crmNotifications');
+    var campaignMessage = "Aguarde mientras se genera el codigo de campaña...";
+    
+    if (notificationsArea == null){
+        alert('Error al mostrar notificaciones: Div not found');
+        return;
+    }
+    /*
+    The integer is the notification type
+    1 = Error
+    2 = Warning
+    3 = Info
+    notificationsArea.AddNotification("<;unique value>;", 3, "","Your text here");
+    */
+    /*Create the notification*/
+    notificationsArea.AddNotification("1001", 3, "1001", campaignMessage);
+}
+function notEmpty(fieldName, fieldType) //Solo lookup, text o date
+{
+  var xat = Xrm.Page.getAttribute;
+  var hasValue = false;
+  
+  switch (fieldType)
+  {
+    case "text":
+    case "date":
+      hasValue = (xat(fieldName).getValue()) ? true : false;
+      break;
+    
+    case "lookup":
+      hasValue = (xat(fieldName).getValue() && xat(fieldName).getValue()[0]) ? true : false;
+      break;
+    
+    default: 
+      alert("Función hasValueAndChanged: \n" +
+            "Debe especificar un tipo dentro de los de esta lista...\n" +
+            " text\n  date\n  lookup\n");
+      break;
+  }
+  return  hasValue
+}
+
+function campaignCodeOnLoad()
+{                              
+  if (Xrm.Page.ui.getFormType() != 1)
+  {
+    var tieneDatosNecesarios =  (
+                               notEmpty("axx_vigentedesde","date") && 
+                               notEmpty("axx_negocio","lookup") &&
+                               notEmpty("axx_subnegocio","lookup") &&
+                               notEmpty("axx_medioocanal","lookup") 
+                              );
+    if(Xrm.Page.getAttribute("axx_codigo").getValue() == null && tieneDatosNecesarios)
+    {
+      NotificacionCampaignCode();
+      var forceSave = true;
+      completarCodigoDeCampana(forceSave);
+    }
+  }
+}
+
+function campaignCodeOnSave(ExecutionObj)
+{
+  if (Xrm.Page.ui.getFormType() != 1)
+  {    
+    var tieneDatosNecesarios =  (
+                                 notEmpty("axx_vigentedesde","date") && 
+                                 notEmpty("axx_negocio","lookup") &&
+                                 notEmpty("axx_subnegocio","lookup") &&
+                                 notEmpty("axx_medioocanal","lookup") 
+                                );
+    
+    var algunDatoCambio = (
+                            Xrm.Page.getAttribute("axx_vigentedesde").getIsDirty()  ||
+                            Xrm.Page.getAttribute("axx_negocio").getIsDirty()       ||
+                            Xrm.Page.getAttribute("axx_subnegocio").getIsDirty()    ||
+                            Xrm.Page.getAttribute("axx_medioocanal").getIsDirty()
+                          )
+
+    if (tieneDatosNecesarios && algunDatoCambio )
+    {
+      //Dispara la creación del codigo en el onload.
+      Xrm.Page.getAttribute("axx_codigo").setValue(null);
+      Xrm.Page.getAttribute("axx_codigo").setSubmitMode("always");      
+      myFunc = function(){Xrm.Page.data.entity.save();}
+      window.setTimeout(myFunc, 500);
+    }
+  }
+}
+
+function completarCodigoDeCampana(forceSave)
+{
+  var fechaLanzamiento, negocio, subnegocio, medioCanal, campaignId;
+  
+  fechaLanzamiento = Xrm.Page.getAttribute("axx_vigentedesde").getValue();
+  negocio          = Xrm.Page.getAttribute("axx_negocio").getValue();
+  subnegocio       = Xrm.Page.getAttribute("axx_subnegocio").getValue();
+  medioCanal       = Xrm.Page.getAttribute("axx_medioocanal").getValue();
+  campaignId       = Xrm.Page.data.entity.getId();
+  forceSave        = (typeof forceSave == "undefined") ? false : true;   
+  
+  var organizationName = Xrm.Page.context.getOrgUniqueName();
+  var serverURL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/" + organizationName ;
+  var odataSelect = serverURL +   
+                    "/xrmservices/2011/OrganizationData.svc/axx_campanaSet?$select=" +
+                    "axx_axx_subnegocio_axx_campana_SubNegocio/axx_Prefijo," + 
+                    "axx_mediocanal_campana_MediooCanal/axx_Prefijo," +
+                    "axx_negocio_campana_Negocio/axx_Prefijo" + 
+                    "&$expand=" +
+                    "axx_axx_subnegocio_axx_campana_SubNegocio," +
+                    "axx_mediocanal_campana_MediooCanal," +
+                    "axx_negocio_campana_Negocio" +
+                    "&$filter=axx_campanaId eq guid'" + (campaignId.replace("{","")).replace("}","") + "'";
+
+  $.ajax({
+    type: "GET",
+    contentType: "application/json; charset=utf-8",
+    datatype: "json",
+    url: odataSelect,
+    async: false,
+    beforeSend: function (XMLHttpRequest) { XMLHttpRequest.setRequestHeader("Accept", "application/json"); },
+    success: function (data, textStatus, XmlHttpRequest)
+    {
+      // Use for a single selected entity
+      if(data.d.results.length == 0)
+      {
+        alert(errorMssg); 
+        Xrm.Page.getAttribute("axx_centrodecostos").setValue(null);
+        return
+      }
+      ProceessReturnedCampaign(data.d.results[0],forceSave);
+    },
+    error: function (XmlHttpRequest, textStatus, errorThrown) { alert('OData Select Failed: ' + odataSelect); }
+  });
+}
+
+function ProceessReturnedCampaign(OneEntity,forceSave)
+{
+  var oneEntity = OneEntity;
+  var prefSubnegocio  = oneEntity.axx_axx_subnegocio_axx_campana_SubNegocio.axx_Prefijo;
+  var prefMedioCanal  = oneEntity.axx_mediocanal_campana_MediooCanal.axx_Prefijo;
+  var prefNegocio     = oneEntity.axx_negocio_campana_Negocio.axx_Prefijo;  
+  var message = "No se puede cargar el codigo de campaña.\n" +
+                "No hay un prefijo cargado para el Entity seleccionado.";
+  var entity = "";
+  
+  //Salir si no devuelve alguno de los datos necesarios
+  if(!prefSubnegocio || prefSubnegocio == "null")
+  {
+    entity = Xrm.Page.getControl("axx_subnegocio").getLabel();
+    alert(message.replace("Entity", entity));
+    return
+  }
+  
+  if (!prefMedioCanal || prefMedioCanal == "null")
+  {
+    entity = Xrm.Page.getControl("axx_medioocanal").getLabel();
+    alert(message.replace("Entity", entity));
+    return
+  }
+  
+  if(!prefNegocio || prefNegocio == "null")
+  {
+    entity = Xrm.Page.getControl("axx_negocio").getLabel();
+    alert(message.replace("Entity", entity));
+    return
+  }
+
+  //Todos los datos necesarios están cargados, continuar
+  var fechaLanzamiento = Xrm.Page.getAttribute("axx_vigentedesde").getValue();
+  var dd = fechaLanzamiento.getDate();
+      dd = (dd.toString().length==1) ?  "0" + dd.toString() : dd.toString();
+      
+  var mm = fechaLanzamiento.getMonth()+1;
+      mm = (mm.toString().length==1) ?  "0" + mm.toString() : mm.toString();
+      
+  var yyyy = fechaLanzamiento.getFullYear().toString();
+   
+  var campaignCode = (prefNegocio + prefSubnegocio + prefMedioCanal).toUpperCase() +
+                     "-" + dd + mm + yyyy;
+ 
+  Xrm.Page.getAttribute("axx_codigo").setValue(campaignCode);
+  Xrm.Page.getAttribute("axx_codigo").setSubmitMode("always");
+  
+  if(forceSave)
+  {
+    myFunc = function(){Xrm.Page.data.entity.save();}
+    window.setTimeout(myFunc, 500);
+  }
+}
+
+function primerasdosletrasyvalidacion(textodospalabras)
+{
+  var primerasdosletras;
+  if (textodospalabras==null)
+  {
+    alert("Los nombres de Negocio, Subnegocio y Medio o Canal no deben ser nulos para poder generar el Código de Campaña");
+    return;
+  }
+  //if ((textodospalabras.indexOf(" ")==0) || (textodospalabras.lastIndexOf(" ")+1 => textodospalabras.length))
+  //{
+  //  alert("Los nombres de Negocio, Subnegocio y Medio o Canal no deben culminar en un caracter de espacio para general el Código de Campaña");
+  //  return;
+  //}
+  var long = textodospalabras.length;
+  var posspacio = textodospalabras.search(/ /i);
+  primeradosletras = textodospalabras.charAt(0).toUpperCase();
+  if (posspacio != -1) {primeradosletras = primeradosletras + textodospalabras.charAt(posspacio+1).toUpperCase()}
+  //alert(primeradosletras);
+  return primeradosletras;
+}
+
+
+function establececodigocampana()
+{
+  if (Xrm.Page.getAttribute("axx_codigo").getValue()!=null)
+  {
+    var codigocampanaoriginal = Xrm.Page.getAttribute("axx_codigo").getValue();
+    codigocampanaoriginal = codigocampanaoriginal.substring(codigocampanaoriginal.indexOf("-"));
+    var codigocampana = primerasdosletrasyvalidacion(Xrm.Page.getAttribute("axx_negocio").getValue()[0].name)   +primerasdosletrasyvalidacion(Xrm.Page.getAttribute("axx_subnegocio").getValue()[0].name)+primerasdosletrasyvalidacion(Xrm.Page.getAttribute("axx_medioocanal").getValue()[0].name)+codigocampanaoriginal;
+    Xrm.Page.getAttribute("axx_codigo").setSubmitMode("always");
+    Xrm.Page.getAttribute("axx_codigo").setValue(codigocampana);
+    return;
+  }
+
+  var ahora = new Date();
+  var dd = ahora.getDate();
+  var mm = ahora.getMonth()+1;
+  var yyyy = ahora.getFullYear().toString();
+  if (mm.toString().length==1){mm = "0" + mm.toString()}else{mm = mm.toString()}
+  if (dd.toString().length==1){dd = "0" + dd.toString()}else{dd = dd.toString()}
+  var codigocampana = primerasdosletrasyvalidacion(Xrm.Page.getAttribute("axx_negocio").getValue()[0].name)+primerasdosletrasyvalidacion(Xrm.Page.getAttribute("axx_subnegocio").getValue()[0].name)+primerasdosletrasyvalidacion(Xrm.Page.getAttribute("axx_medioocanal").getValue()[0].name)+"-"+dd+mm+yyyy
+  Xrm.Page.getAttribute("axx_codigo").setSubmitMode("always");
+  Xrm.Page.getAttribute("axx_codigo").setValue(codigocampana);
+}
+
+
+function copiarfechasdevigencia(cambiofechaefectiva)
+{
+   
+  var fechadesde;
+  var fechahasta;
+
+  if (cambiofechaefectiva==true){Xrm.Page.getAttribute("axx_flagcambiofechasvigencia").setValue(true);}
+
+  if (Xrm.Page.getAttribute("axx_vigentedesdeprogramado").getValue()!=null){fechadesde=Xrm.Page.getAttribute("axx_vigentedesdeprogramado").getValue()}
+  if (Xrm.Page.getAttribute("axx_vigentedesde").getValue()!=null){fechadesde=Xrm.Page.getAttribute("axx_vigentedesde").getValue()}
+  if (Xrm.Page.getAttribute("axx_vigentehastaprogramado").getValue()!=null){fechahasta=Xrm.Page.getAttribute("axx_vigentehastaprogramado").getValue()}
+  if (Xrm.Page.getAttribute("axx_vigentehasta").getValue()!=null){fechahasta=Xrm.Page.getAttribute("axx_vigentehasta").getValue()}
+  
+
+  if ((Xrm.Page.getAttribute("axx_vigentedesde").getValue()==null)&(fechadesde!=null))
+  {
+    Xrm.Page.getAttribute("axx_vigentedesde").setValue(fechadesde);
+  }
+  
+  if ((Xrm.Page.getAttribute("axx_vigentedesdeprogramado").getValue()==null)&(fechadesde!=null))
+  {
+    Xrm.Page.getAttribute("axx_vigentedesdeprogramado").setValue(fechadesde);
+    Xrm.Page.getAttribute("axx_flagcambiofechasvigencia").setValue(false);
+  }
+  
+  if ((Xrm.Page.getAttribute("axx_vigentehasta").getValue()==null)&(fechahasta!=null))
+  {
+    Xrm.Page.getAttribute("axx_vigentehasta").setValue(fechahasta);
+  }
+  
+  if ((Xrm.Page.getAttribute("axx_vigentehastaprogramado").getValue()==null)&(fechahasta!=null))
+  {
+    Xrm.Page.getAttribute("axx_vigentehastaprogramado").setValue(fechahasta);
+    Xrm.Page.getAttribute("axx_flagcambiofechasvigencia").setValue(false);
+  }
+
+  if ((Xrm.Page.getAttribute("axx_vigentehasta").getValue()!=null)&&(Xrm.Page.getAttribute("axx_vigentehasta").getValue()<Xrm.Page.getAttribute("axx_vigentedesde").getValue()))
+  {
+  alert("Las fechas de cierre deben superiores o igulaes a las fechas de inicio");
+  Xrm.Page.getAttribute("axx_vigentehasta").setValue(new Date(Xrm.Page.getAttribute("axx_vigentedesde").getValue().getTime() + 1*24*60*60*1000));
+  }
+  
+  if ((Xrm.Page.getAttribute("axx_vigentehastaprogramado").getValue()!=null)&&(Xrm.Page.getAttribute("axx_vigentehastaprogramado").getValue()<Xrm.Page.getAttribute("axx_vigentedesdeprogramado").getValue()))
+  {
+  alert("Las fechas de cierre deben superiores o igulaes a las fechas de inicio");
+  Xrm.Page.getAttribute("axx_vigentehastaprogramado").setValue(new Date(Xrm.Page.getAttribute("axx_vigentedesdeprogramado").getValue().getTime() + 1*24*60*60*1000));
+  }
+  
+  }
+
+function validarCentroCosto(){
+	var value = Xrm.Page.getAttribute("axx_centrodecostos").getValue();
+	if (value == null)
+	{
+		window.alert("Debe cargar el Centro de Costo.");
+		event.returnValue = false;
+	} 
+}
+
+function onChangeCargarFueraDeBase(){
+    var requiredLevel = (Xrm.Page.getAttribute("axx_cargarfuerabase").getValue()) ? "required" : "none";
+    Xrm.Page.getAttribute("axx_listademarketingdefault").setRequiredLevel(requiredLevel);
+    Xrm.Page.ui.controls.get("axx_listademarketingdefault").setDisabled((requiredLevel == "none"));
+    if(requiredLevel == "none"){
+        Xrm.Page.getAttribute("axx_listademarketingdefault").setValue(null);
+    }
+}
+
+function onChangeCargarFueraDePlanificacion(){
+    var requiredLevel = (Xrm.Page.getAttribute("axx_cargarfueradeplanificacion").getValue()) ? "required" : "none";
+    Xrm.Page.getAttribute("axx_listadepreciosalternativa").setRequiredLevel(requiredLevel);
+    Xrm.Page.ui.controls.get("axx_listadepreciosalternativa").setDisabled((requiredLevel == "none"));
+    if(requiredLevel == "none"){
+        Xrm.Page.getAttribute("axx_listadepreciosalternativa").setValue(null);
+    }
+}

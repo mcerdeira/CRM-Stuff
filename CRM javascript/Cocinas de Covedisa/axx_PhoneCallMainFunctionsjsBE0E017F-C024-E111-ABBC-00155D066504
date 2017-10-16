@@ -1,0 +1,597 @@
+function defaultContacto() {
+  document.getElementById("regardingobjectid").setAttribute("defaulttype", "2");
+  document.getElementById("to").setAttribute("defaulttype", "2");
+}
+
+function determinarArea() {
+  if (Xrm.Page.ui.getFormType() == 1) { //Es un Create form
+    var organizationName = Xrm.Page.context.getOrgUniqueName();
+    var serverURL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/" + organizationName;
+    var odataSelect = serverURL +
+                      "/xrmservices/2011/OrganizationData.svc/SystemUserSet?$select=axx_AreaPredeterminada" + 
+                      "&$filter=SystemUserId eq guid'" + Xrm.Page.context.getUserId() + "'";
+    $.ajax({
+      type: "GET",
+      contentType: "application/json; charset=utf-8",
+      datatype: "json",
+      url: odataSelect,
+      async: true,
+      beforeSend: function (XMLHttpRequest) { XMLHttpRequest.setRequestHeader("Accept", "application/json"); },
+      success: function (data, textStatus, XmlHttpRequest) {
+        if (data.d.results.length == 0) {
+          return;
+        }
+        var area = data.d.results[0].axx_AreaPredeterminada;
+        if (area != null) {
+          Xrm.Page.getAttribute("axx_area").setValue(area.Value);
+        }
+      },
+      error: function (XmlHttpRequest, textStatus, errorThrown) { alert('OData Select Failed: ' + odataSelect); }
+    });
+  }
+}
+
+function setWindowSize() {
+	try {
+		var currentWidth = 630,
+      currentHeight = 460,
+      minimunHeight = 550,
+      minimunWidth = 1220,
+      x = 2,
+      y = 0;
+    if (document.body && document.body.offsetWidth) {
+			currentWidth = window.top.document.body.offsetWidth;
+			currentHeight = window.top.document.body.offsetHeight;
+		}
+		if (document.compatMode == 'CSS1Compat' &&
+        window.top.document.documentElement &&
+        window.top.document.documentElement.offsetWidth) {
+			currentWidth = window.top.document.documentElement.offsetWidth;
+			currentHeight = window.top.document.documentElement.offsetHeight;
+		}
+		if (window.innerWidth && window.innerHeight) {
+			currentWidth = window.top.innerWidth;
+			currentHeight = window.top.innerHeight;
+		}
+		//Correct values;
+		currentHeight = currentHeight + 170;
+		var screenWidth = screen.availWidth;
+
+		if (currentWidth < minimunWidth) {
+			x = (screenWidth - minimunWidth) / 2;
+			window.top.moveTo(x, y);
+			window.top.resizeTo(minimunWidth, currentHeight);
+			currentWidth = minimunWidth;
+		}
+
+		if (currentHeight < minimunHeight) {
+			x = (screenWidth - currentWidth) / 2;
+			window.top.moveTo(x, y);
+			window.top.resizeTo(currentWidth, minimunHeight);
+		}
+	} catch (e) {}
+}
+
+function changeAreaPlusDireccion() {
+  var fDireccion, fAreaPlusDireccion, outGoing, valorArea, areaPlusDireccionOriginal, areaPlusDireccion;
+
+  fAreaPlusDireccion = Xrm.Page.getAttribute("axx_areaplusdireccion");
+  fDireccion = Xrm.Page.getAttribute("directioncode");
+  valorArea = Xrm.Page.getAttribute("axx_area").getValue();
+  areaPlusDireccionOriginal = fAreaPlusDireccion.getValue();
+  outGoing = true;
+  areaPlusDireccion = null;
+
+  if (fDireccion.getValue() == outGoing) {
+      //OUT
+    switch (valorArea) {
+    //CALL
+    case 282270000:
+      areaPlusDireccion = 1;
+      break;
+
+    //CAC
+    case 282270001:
+      areaPlusDireccion = 3;
+      break;
+    }
+
+  } else {
+    //IN
+    switch (valorArea) {
+    //CALL
+    case 282270000:
+      areaPlusDireccion = 0;
+      break;
+
+    //CAC
+    case 282270001:
+      areaPlusDireccion = 2;
+      break;
+    }
+
+  }
+
+  fAreaPlusDireccion.setValue(areaPlusDireccion);
+
+  if (areaPlusDireccionOriginal != areaPlusDireccion) {
+    //Fire on change.
+    fAreaPlusDireccion.fireOnChange();
+    fAreaPlusDireccion.setSubmitMode("always");
+  }
+}
+
+function isEmptyOptionSet(eContext) {
+
+  var attribute = eContext.getEventSource();
+  var boolDisable = false;
+  var controls = attribute.controls.get();
+
+  var oLength = attribute.getOptions().length;
+
+  if (oLength == 0) {
+    boolDisable = true;
+  } else {
+    if (oLength == 1 && attribute.getOptions()[0].value == null) {
+      boolDisable = true;
+    }
+  }
+  var i;
+  for (i in controls) {
+    var control = controls[i];
+    control.setDisabled(boolDisable);
+  }
+}
+
+function nameLlamado() {
+  var att, name, listSep, attValue, usar, destination;
+  att = Xrm.Page.getAttribute;
+  name = "";
+  listSep = ", ";
+  attValue = "";
+  usar = true;
+  destination = "subject";
+
+  var contact = (att("directioncode").getValue()) ? "to" : "from";
+  var o = [
+    getAttributeValue(contact, listSep),
+    ' # ',
+    getAttributeValue("axx_area", listSep),
+    ' - ',
+    getAttributeValue("directioncode", listSep),
+    ': ',
+    getAttributeValue("axx_categoria", listSep),
+    ' - ',
+    getAttributeValue("axx_subcategoria", listSep)
+  ];
+
+  var oLength = o.length;
+  for (i = 1; i < oLength; i++) {
+    usar = true;
+    switch (i) {
+    case 2:
+      usar = ((o[1] != "") && ((o[3] != "") || (o[5] != "") || (o[7] != "") || (o[9] != "")));
+      break;
+    case 4:
+      usar = (o[3] != "") && (o[5] != "");
+      break;
+    case 6:
+      usar = ((o[3] != "") || (o[5] != "")) && ((o[7] != "") || (o[9] != ""));
+      break;
+    case 8:
+      usar = (o[7] != "") && (o[9] != "");
+      break;
+    }
+    name += (usar) ? o[i] : "";
+  }
+
+  Xrm.Page.getAttribute(destination).setValue(name);
+  Xrm.Page.getAttribute(destination).setSubmitMode("always");
+}
+
+function setIframeToCustomer() {
+  var serverURL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port +
+                  "/" + Xrm.Page.context.getOrgUniqueName();
+  var recordURL = serverURL +  "/main.aspx?etc= ";
+  var entityTypeCode = "2";
+  var formId = "7C08DD24-EAEA-4103-9C56-FD4FB73E7DFB";
+  var recordId = "257bCC773E7A-5D26-E111-96D1-00155D066504";
+
+  recordURL += entityTypeCode; //2
+  recordURL += "&pagetype=entityrecord&extraqs=formid%3D";
+  recordURL += formId; //7C08DD24-EAEA-4103-9C56-FD4FB73E7DFB
+  recordURL += "%0D%0A%26id%3d%";
+  recordURL += recordId;//257bCC773E7A-5D26-E111-96D1-00155D066504
+  recordURL += "%257d";
+
+  var control = Xrm.Page.getControl("IFRAME_contact");
+  control.setSrc(recordURL);
+}
+
+function cargarPreviewCliente() {
+
+  var webResource = "WebResource_CustomerPreview";
+  var formato = "ZD";
+  var valorDireccion = Xrm.Page.getAttribute("directioncode").getValue();
+  var attributeName = "";
+  var camposContacto =  "sec_Información del Contacto#fullname" + "|" +
+                        "Saludo#salutation" + "|" +
+                        "Telefono laboral#telephone1" + "|" +
+                        "Nombre Completo#fullname" + "|" +
+                        "Telefono Particular#telephone2" + "|" +
+                        "Primer Nombre#firstname" + "|" +
+                        "Telefono Celular#mobilephone" + "|" +
+                        "Apellido#lastname" + "|" +
+                        "Fax#fax" + "|" +
+                        "Titulo#jobtitle" + "|" +
+                        "E-mail#emailaddress1" + "|" +
+                         "Tipo de Documento#axx_tipodocumento" + "|" +
+                         "Cliente principal#parentcustomerid" + "|" +
+                         "N° de Documento#axx_nrodocumento" + "|" +
+                         "Condicion IVA#axx_condicioniva" + "|" +
+                         "Genero#axx_genero" + "|" +
+                         "ID#axx_clientecrm" + "|" +
+                         "sec_Dirección#axx_categoriadedireccion" + "|" +
+                         "Categoría#axx_categoriadedireccion" + "|" +
+                         "Código Postal#address1_postalcode" + "|" +
+                         "Calle#address1_line1" + "|" +
+                         "Barrio#axx_barrio" + "|" +
+                         "Numero#axx_numero" + "|" +
+                         "Ciudad#address1_city" + "|" +
+                         "Piso#axx_piso" + "|" +
+                         "Provincia#address1_stateorprovince" + "|" +
+                         "Departamento#axx_departamento" + "|" +
+                         "País#address1_country" + "|" +
+                         "Descripción#description" + "|" +
+                         "Descripción#description";
+
+
+  var camposCuenta =  "sec_Información de la Cuenta#name|" +
+                      "Nombre#name|" +
+                      "CUIT#axx_nrodocumento|" +
+                      "Contacto Principal#primarycontactid|" +
+                      "Telefono#telephone1|" +
+                      "Número de Cuenta#accountnumber|" +
+                      "Otro Telefono#telephone2|" +
+                      "Cuenta Principal#parentaccountid|" +
+                      "Fax#fax|" +
+                      "E-mail#emailaddress1|" +
+                      "Sitio Web#websiteurl|" +
+                      "Condicion de IVA#axx_condicioniva|" +
+                      "    #address2_county|" +
+                      "sec_Dirección#axx_categoriadedireccion|" +
+                      "Categoría#axx_categoriadedireccion|" +
+                      "Código Postal#address1_postalcode|" +
+                      "Calle#address1_line1|" +
+                      "Barrio#axx_barrio|" +
+                      "Número#axx_numero|" +
+                      "Ciudad#address1_city|" +
+                      "Piso#axx_piso|" +
+                      "Provincia#address1_stateorprovince|" +
+                      "Departamento#axx_departamento|" +
+                      "País#address1_country|" +
+                      "Description#description|" +
+                      "Description#description";
+
+  if (valorDireccion) {
+    attributeName = "to";
+  } else {
+    attributeName = "from";
+  }
+
+  var attributo = Xrm.Page.getAttribute(attributeName);
+
+  if (attributo.getValue() && attributo.getValue()[0]) {
+    var tipo = attributo.getValue()[0].entityType;
+    var miFuncion;
+    if (tipo == "contact") {
+      miFuncion = function () {LoadLookPreview(webResource, attributeName, camposContacto, formato); };
+
+    } else if (tipo == "account") {
+      miFuncion = function () {LoadLookPreview(webResource, attributeName, camposCuenta, formato); };
+
+    } else {
+      miFuncion = function () {
+        document.getElementById(webResource).contentWindow.document.getElementById('lookupDIV').innerHTML = "<span ></span>";
+      };
+    }
+    miFuncion();
+  }
+}
+
+function cargarClienteOnClick() {
+	cargarPreviewCliente();
+	//Mostrar la seccion de informarción del cliente:
+	Xrm.Page.ui.controls.get("WebResource_CustomerPreview").setVisible(true);
+
+	//Ocultar la seccion de registros relacionados
+	Xrm.Page.ui.tabs.get("phonecall").sections.get("phonecall_section_6").setVisible(false);
+
+	//Deshabilitar el boton de información del cliente
+	getButton("WebResource_CustomerInfo").Disable();
+	//Habilitar el boton de registros relacionados
+	getButton("WebResource_RelatedRecords").Enable();
+}
+
+function cargarClienteOnLoad() {
+	setTimeout(cargarClienteOnClick, 1500);
+}
+
+function cargarRelacionadosOnClick() {
+	cargarRegistrosRelacionados();
+	//Ocultar la seccion de informarción del cliente:
+	Xrm.Page.ui.controls.get("WebResource_CustomerPreview").setVisible(false);
+}
+
+function cargarRegistrosRelacionados() {
+  var valorDireccion = Xrm.Page.getAttribute("directioncode").getValue();
+  var attributeName = "";
+
+  if (valorDireccion) {
+    attributeName = "to";
+  } else {
+    attributeName = "from";
+  }
+
+  var attributo = Xrm.Page.getAttribute(attributeName);
+  if (typeof (cliente_valorAnterior) != "undefined" && cliente_valorAnterior == attributo.getValue()[0]) {
+    //Mostrar la seccion de registros relacionados
+    Xrm.Page.ui.tabs.get("phonecall").sections.get("phonecall_section_6").setVisible(true);
+    //Habilitar el boton de información del cliente
+    getButton("WebResource_CustomerInfo").Enable();
+    //Deshabilitar el boton de registros relacionados
+    getButton("WebResource_RelatedRecords").Disable();
+    return;
+  } else {
+	  cliente_valorAnterior = attributo.getValue()[0];
+  }
+
+  if (attributo.getValue() && attributo.getValue()[0]) {
+    var tipo = attributo.getValue()[0].entityType;
+
+    if (tipo == "contact") {
+      SetIframeContent("IFRAME_Activity", "2", attributo.getValue()[0].id, "areaActivities", "Actividades", "");
+      SetIframeContent("IFRAME_Suscription", "2", attributo.getValue()[0].id, "axx_contact_suscripcion", "Suscripciones", "");
+      SetIframeContent("IFRAME_order", "2", attributo.getValue()[0].id, "areaOrders", "Pedidos", "");
+      SetIframeContent("IFRAME_Incident", "2", attributo.getValue()[0].id, "areaService", "Casos", "");
+
+    } else if (tipo == "account") {
+      SetIframeContent("IFRAME_Activity", "1", attributo.getValue()[0].id, "areaActivities", "Actividades", "");
+      SetIframeContent("IFRAME_Suscription", "1", attributo.getValue()[0].id, "axx_account_suscripcion", "Suscripciones", "");
+      SetIframeContent("IFRAME_order", "1", attributo.getValue()[0].id, "areaOrders", "Pedidos", "");
+      SetIframeContent("IFRAME_Incident", "1", attributo.getValue()[0].id, "areaService", "Casos", "");
+
+    } else {
+      //Habilitar el boton de información del cliente
+      getButton("WebResource_CustomerInfo").Enable();
+      //Deshabilitar el boton de registros relacionados
+      getButton("WebResource_RelatedRecords").Disable();
+    }
+  }
+}
+
+function getButton(webResource) {
+	return getIFrame(webResource).crmButton;
+}
+
+function getIFrame(webResource) {
+	var control = Xrm.Page.ui.controls.get(webResource);
+	var id      = control.getObject().id;
+	var frame   = document.frames[id];
+	return frame;
+}
+
+function displayRelatedSection() {
+	var activityReady = getIFrame("IFRAME_Activity").frameElement.contentWindow.document.getElementById("crmFormProxyForRibbon");
+	var suscriptionReady = getIFrame("IFRAME_Suscription").frameElement.contentWindow.document.getElementById("crmFormProxyForRibbon");
+	var orderReady = getIFrame("IFRAME_order").frameElement.contentWindow.document.getElementById("crmFormProxyForRibbon");
+	var incidentReady = getIFrame("IFRAME_Incident").frameElement.contentWindow.document.getElementById("crmFormProxyForRibbon");
+
+	if (activityReady && suscriptionReady && orderReady && incidentReady) {
+    //Habilitar el boton de información del cliente
+		getButton("WebResource_CustomerInfo").Enable();
+		//Deshabilitar el boton de registros relacionados
+		getButton("WebResource_RelatedRecords").Disable();
+		RefreshRibbon();
+
+		var miFuncion = function () {
+      //Habilitar el boton de información del cliente
+      getButton("WebResource_CustomerInfo").Enable();
+      //Deshabilitar el boton de registros relacionados
+      getButton("WebResource_RelatedRecords").Disable();
+      Xrm.Page.ui.tabs.get("phonecall").sections.get("phonecall_section_6").setVisible(true);
+		};
+		setTimeout(miFuncion, 1500);
+	}
+}
+
+function SetRequiredFields() {
+  Xrm.Page.getAttribute("axx_categoria").setRequiredLevel("required");
+  Xrm.Page.getAttribute("axx_subcategoria").setRequiredLevel("required");
+}
+
+function ValidateDirectionAndDisableMarketingList() {
+  if (Xrm.Page.getAttribute("directioncode").getValue() == '0') {
+    Xrm.Page.getAttribute("axx_listademarketing").setRequiredLevel("none");
+    Xrm.Page.getAttribute("axx_listademarketing").setValue(null);
+    Xrm.Page.getControl("axx_listademarketing").setDisabled(true);
+    Xrm.Page.getAttribute("axx_listademarketing").setSubmitMode("always");
+  } else {
+    Xrm.Page.getControl("axx_listademarketing").setDisabled(false);
+    Xrm.Page.getAttribute("axx_listademarketing").setRequiredLevel("required");
+    Xrm.Page.getAttribute("axx_listademarketing").setSubmitMode("dirty");
+  }
+}
+
+function setProductLookupFilter(ClearProductLookup, isOnLoad) {
+  var Regarding = Xrm.Page.getAttribute("regardingobjectid");
+  var RecordName;
+  var RecordId;
+  var ViewId = "{00000000-0000-0000-0000-000000000010}";
+  var EntityName = "product";
+  var ViewDisplayName;
+  var FetchXml;
+  var LayoutXml = "<grid name='resultset' object='1024' jump='name' select='1' icon='1' preview='1'>" +
+                  "<row name='result' id='productid'>" +
+                  "<cell name='name' width='250' />" +
+                  "<cell name='productnumber' width='100' />" +
+                  "<cell name='producttypecode' width='100' />" +
+                  "</row>" +
+                  "</grid>";
+
+  if (Regarding.getValue() != null && Regarding.getValue()[0].type == 1088) { //Si está referenciando a un pedido.
+    RecordId = Regarding.getValue()[0].id;
+    RecordName = Regarding.getValue()[0].name;
+
+    ViewDisplayName = "Productos del pedido: " + RecordName;
+
+    FetchXml = "<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='true'>" +
+               "<entity name='product'>" +
+               "<attribute name='productid' />" +
+               "<order attribute='name' descending='false' />" +
+               "<link-entity name='salesorderdetail' from='productid' to='productid' alias='aa'>" +
+               "<link-entity name='salesorder' from='salesorderid' to='salesorderid' alias='ab'>" +
+               "<filter type='and'>" +
+               "<condition attribute='salesorderid' operator='eq' value='" + RecordId + "' />" +
+               "</filter>" +
+               "</link-entity>" +
+               "</link-entity>" +
+               "</entity>" +
+               "</fetch>";
+  } else {
+    if(typeof isOnLoad != "undefined" && isOnLoad) {return;}
+    ViewDisplayName = "Productos";
+    FetchXml = "<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>" +
+               "<entity name='product'>" +
+               "<attribute name='productid' />" +
+               "<order attribute='name' descending='false' />" +
+               "</entity>" +
+               "</fetch>";
+  }
+
+  if (ClearProductLookup) {
+    Xrm.Page.getAttribute("axx_productid").setValue(null);
+  }
+  Xrm.Page.getControl("axx_productid").addCustomView(ViewId, EntityName, ViewDisplayName, FetchXml, LayoutXml, true);
+}
+
+function SetPCResultGroup() {
+  var phoneCallResultGroup, campaign;
+  campaign = Xrm.Page.getAttribute("axx_campana").getValue();
+
+  if (campaign == null || campaign[0] == null) {
+    Xrm.Page.getAttribute("axx_grupoderesultadosdellamada").setValue(null);
+  } else {
+    var organizationName = Xrm.Page.context.getOrgUniqueName();
+    var serverURL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/" + organizationName;
+    var odataSelect = serverURL +
+                      "/xrmservices/2011/OrganizationData.svc/axx_campanaSet?" +
+                      "$select=axx_grupoderesultadosdellamada&" +
+                      "$filter=axx_campanaId eq guid'" + campaign[0].id + "'";
+    $.ajax({
+      type: "GET",
+      contentType: "application/json; charset=utf-8",
+      datatype: "json",
+      url: odataSelect,
+      async: true,
+      beforeSend: function (XMLHttpRequest) { XMLHttpRequest.setRequestHeader("Accept", "application/json"); },
+      success: function (data, textStatus, XmlHttpRequest) {
+        if (data.d.results.length == 0) {
+          return;
+        }
+        var grupoderesultadosdellamada = data[0].d.results[0].axx_grupoderesultadosdellamada;
+        processPhoneCallResultGroup(grupoderesultadosdellamada);
+      },
+      error: function (XmlHttpRequest, textStatus, errorThrown) { alert('OData Select Failed: ' + odataSelect); }
+    });
+  }
+}
+
+function processPhoneCallResultGroup(grupoderesultadosdellamada) {
+  var areaPlusDireccion = Xrm.Page.getAttribute("axx_areaplusdireccion").getValue();
+
+  if (grupoderesultadosdellamada != null && areaPlusDireccion == "1") {
+    //Si hay grupo de resultado de llamado y es un llamado Call-Out.
+    Xrm.Page.getAttribute("axx_grupoderesultadosdellamada").setValue(grupoderesultadosdellamada);
+  } else {
+    Xrm.Page.getAttribute("axx_grupoderesultadosdellamada").setValue(null);
+  }
+}
+
+function callAutocomplete() {
+  var camp = Xrm.Page.context.getQueryStringParameters().Mit_Cmp;
+  var cont = Xrm.Page.context.getQueryStringParameters().Mit_Ani;
+  var TipCampania = Xrm.Page.context.getQueryStringParameters().Mit_Dir;
+  var Accion = Xrm.Page.context.getQueryStringParameters().Mit_Acc;
+  var tofrom;
+  var formType = Xrm.Page.ui.getFormType(); // 1:Create 2:Update
+
+  if (Accion && Accion.toLowerCase() == "open" && formType == 1) {
+    if (TipCampania.toLowerCase() == "in") {
+      Xrm.Page.getAttribute("directioncode").setValue(0);
+      tofrom = "from";
+    } else if (TipCampania.toLowerCase() == "out") {
+      Xrm.Page.getAttribute("directioncode").setValue(1);
+      tofrom = "to";
+    } else {
+      if (Xrm.Page.getAttribute("directioncode").getValue() == 1) { //Out
+        tofrom = "to";
+      } else {
+        tofrom = "from";
+      }
+    }
+    Xrm.Page.getAttribute("phonenumber").setValue(cont);
+    var getCampana = function (c) {
+      if (c) {
+        var where;
+        var order;
+        where = "axx_Codigo_Interfaz_Telefonia eq '" + c + "'";
+        order = "CreatedOn desc";
+        return ODataSelectAjax("axx_campana", "axx_campanaId, axx_name, axx_grupoderesultadosdellamada", where, order);
+      } else {
+        return null;
+      }
+    };
+    var getContact = function (c) {
+      if (c) {
+        var where;
+        var order;
+        where = "axx_ani eq '" + c + "'";
+        order = "CreatedOn desc";
+        return ODataSelectAjax("Contact", "ContactId, FullName", where, order);
+      } else {
+        return null;
+      }
+    };
+
+    $.when(getCampana(camp), getContact(cont)
+      ).then(function (campana, contact) {
+      var lookup;
+      if (campana[0] && campana[0].d) {
+        if (campana[0].d.results[0] && campana[0].d.results[0].axx_campanaId) {
+          lookup = newLookupValue(campana[0].d.results[0].axx_campanaId, "axx_campana", campana[0].d.results[0].axx_name);
+          Xrm.Page.getAttribute("axx_campana").setValue(lookup);
+
+          var grupoderesultadosdellamada = campana[0].d.results[0].axx_grupoderesultadosdellamada;
+          processPhoneCallResultGroup(grupoderesultadosdellamada);
+        }
+      }
+      if (contact[0] && contact[0].d) {
+        if (contact[0].d.results[0] && contact[0].d.results[0].ContactId) {
+          lookup = newLookupValue(contact[0].d.results[0].ContactId, "contact", contact[0].d.results[0].FullName);
+          Xrm.Page.getAttribute(tofrom).setValue(lookup);
+        }
+      }
+      Xrm.Page.getControl("description").setFocus();
+    }).fail(function () {
+      alert("Hubo un error al buscar el contacto o la campaña");
+    });
+  } else {
+    SetPCResultGroup();
+  }
+}
+
+function newLookupValue(id, entityType, name) {
+  var olookup = {id: id, entityType: entityType, name: name};
+  return [olookup];
+}

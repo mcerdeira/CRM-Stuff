@@ -1,0 +1,56 @@
+function setDefaultUnit(isLoad){
+
+if (isLoad && Xrm.Page.ui.getFormType() != 1){return}
+ 
+//Create an array to set as the DataValue for the lookup control. 
+lookupData = new Array(); 
+
+//Create an Object add to the array. 
+var lookupItem= new Object(); 
+
+//Set the id, typename, and name properties to the object. 
+//lookupItem.id = 'BBB06298-BAF3-44C5-AB27-458FA2295D61'; 
+lookupItem.id = '93F404DE-635A-4E3C-A039-3911597878B6'; 
+lookupItem.typename = 'uom'; 
+lookupItem.name = 'UN'; 
+
+// Add the object to the array. 
+lookupData[0] = lookupItem
+
+// Set the value of the lookup field to the value of the array. 
+setTimeout ("crmForm.all.uomid.DataValue = lookupData", 500); 
+}
+
+
+function mostrarCatalogo(){
+	miTab = Xrm.Page.ui.tabs.get("tab_4");
+	miSeccion = miTab.sections.get("tab_5_section_1");
+	
+	if (true){
+		miSeccion.setVisible(true);
+	}
+}
+
+
+function estadoBotones(){
+	var formType = Xrm.Page.ui.getFormType();
+	if(formType == 1 || formType == 2){
+	  miFuncion = function(){
+	  //Deshabilitar los botones de Cierre
+		getButton("WebResource_Descartar").Enable();
+		getButton("WebResource_Confirmar").Enable();
+		};
+	}else{
+	  miFuncion = function(){
+		//Habilitar los botones de cierre
+		getButton("WebResource_Confirmar").Disable();
+		getButton("WebResource_Descartar").Disable();
+	  };
+	}
+	
+	miFuncion();
+}
+
+function getButton(webResource){
+	return getIFrame(webResource).crmButton;
+}

@@ -1,0 +1,76 @@
+function tieneEmail(onChange){
+  var solicitar;
+  
+  if (!onChange && (Xrm.Page.ui.getFormType() == 1)){
+    solicitar = true;
+  }else{
+    solicitar = Xrm.Page.getAttribute("axx_tieneemail").getValue();
+  }
+  
+  if (solicitar){
+    Xrm.Page.getControl("emailaddress1").setDisabled(false);
+    Xrm.Page.getAttribute("emailaddress1").setRequiredLevel("required");
+  }else{
+    Xrm.Page.getControl("emailaddress1").setDisabled(true);
+    Xrm.Page.getAttribute("emailaddress1").setRequiredLevel("none");
+
+    if (onChange){
+      Xrm.Page.getAttribute("emailaddress1").setValue(null);
+      Xrm.Page.getAttribute("emailaddress1").setSubmitMode("always");
+    }
+  }
+}
+
+function validatePhone(ExecutionObj){    
+    var telephone2 = Xrm.Page.getAttribute("telephone2").getValue(); 
+    var Err = false;
+    var ani;
+    hideAlert(); // Esconder todas las notificaciones
+    if (telephone2 != undefined){            
+        if (telephone2.charAt(0) == "0"){
+            showAlert("El teléfono no puede empezar con 0");   
+            Err = true;
+        }
+    }
+    ani = getAni(); // Obtener prefijo + numero             
+    if (ani.length != 10){
+        showAlert("Teléfono y Código de Área, deben sumar 10 dígitos");   
+        Err = true;
+    }else{
+        Xrm.Page.getAttribute("axx_ani").setValue(ani); 
+   	}
+   	
+    if (Err){
+        ExecutionObj.getEventArgs().preventDefault();
+    }
+}
+
+function getAni(){
+    var i;
+    var codigoarea = parseInt(Xrm.Page.getAttribute("axx_codigodearea").getValue(), 10);
+    var telephone2 = Xrm.Page.getAttribute("telephone2").getValue();
+    var telefono = "";
+  
+    for (i=0;i<telephone2.length;i++){
+        if (isNumber(telephone2.charAt(i))){
+            telefono += telephone2.charAt(i);
+        } 
+    }                
+    return codigoarea.toString() + telefono.toString();   
+}
+
+function showAlert(message){
+    var notificationsArea = document.getElementById('crmNotifications');
+    if (notificationsArea == null) {
+        alert(message);
+    }else{
+       notificationsArea.AddNotification("1230000321", 2, "ribbonButton", message); 
+    }
+}
+
+function hideAlert(){
+    var notificationsArea = document.getElementById('crmNotifications');
+    if (notificationsArea != null) {
+        notificationsArea.SetNotifications("1230000321", "ribbonButton");
+    }    
+}

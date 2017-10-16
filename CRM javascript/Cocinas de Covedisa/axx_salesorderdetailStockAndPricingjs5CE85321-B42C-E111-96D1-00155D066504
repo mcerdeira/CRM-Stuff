@@ -1,0 +1,257 @@
+/*
+function consultaPrioridadStock(campaignId, productLineId){
+  var respuesta = false;
+    
+  if ((typeof productLineId != "undefined")&&(typeof campaignId != "undefined")){
+    var xml =
+    "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tem=\"http://tempuri.org/\" xmlns:stoc=\"http://schemas.datacontract.org/2004/07/StockService\">" +
+       "<soapenv:Header/>"  +
+         "<soapenv:Body>" + 
+          "<tem:IsPriority>" + 
+             "<tem:wsIn>" +
+                "<stoc:CampaignId>"+campaignId+"</stoc:CampaignId>" +
+                "<stoc:ItemId>"+productLineId+"</stoc:ItemId>" +
+             "</tem:wsIn>" +
+          "</tem:IsPriority>" +
+       "</soapenv:Body>" +
+    "</soapenv:Envelope>";
+
+    var xmlHttpRequest = new ActiveXObject("Msxml2.XMLHTTP");
+    var wsURL = window.location.protocol + "//" + window.location.hostname + "/StockService-testing/StockService.svc";
+    xmlHttpRequest.open("POST", wsURL, false, "COVEDISA\\crmadmin", "Coved159");
+    xmlHttpRequest.setRequestHeader("Content-Type", "text/xml; charset=utf-8");
+    xmlHttpRequest.setRequestHeader("SOAPAction", "http://tempuri.org/IStockService/IsPriority");
+    xmlHttpRequest.send(xml);
+    var DOM = new ActiveXObject("Msxml2.DOMDocument");
+    DOM.loadXML(xmlHttpRequest.responseText);
+    var respuesta = (DOM.text == "") ? false : DOM.text;
+  }
+  
+  return respuesta;
+
+}
+
+function consultaStockActual(campaignId, productLineId){
+  var respuesta = false;
+  if ((campaignId)&&(productLineId)){
+
+    //alert("Debug0");
+    var xml =
+    "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tem=\"http://tempuri.org/\" xmlns:stoc=\"http://schemas.datacontract.org/2004/07/StockService\">" +
+       "<soapenv:Header/>"  +
+         "<soapenv:Body>" + 
+          "<tem:GetStock>" + 
+             "<tem:wsIn>" +
+                "<stoc:CampaignId>" + campaignId + "</stoc:CampaignId>" +
+                "<stoc:ItemId>"+productLineId+"</stoc:ItemId>" +
+             "</tem:wsIn>" +
+          "</tem:GetStock>" +
+       "</soapenv:Body>" +
+    "</soapenv:Envelope>";
+    var xmlHttpRequest = new ActiveXObject("Msxml2.XMLHTTP");
+    var wsURL = window.location.protocol + "//" + window.location.hostname + "/StockService-testing/StockService.svc";
+    xmlHttpRequest.open("POST", wsURL, false, "COVEDISA\\crmadmin", "Coved159");
+    xmlHttpRequest.setRequestHeader("Content-Type", "text/xml; charset=utf-8");
+    xmlHttpRequest.setRequestHeader("SOAPAction", "http://tempuri.org/IStockService/GetStock");
+    xmlHttpRequest.send(xml);
+    var DOM = new ActiveXObject("Msxml2.DOMDocument");
+    DOM.loadXML(xmlHttpRequest.responseText);
+    respuesta = DOM.text;
+  }
+  return respuesta;
+}
+
+function asignarPrioridad(campaignId, productId){
+  var stockPriority = consultaPrioridadStock(thisOrder.Campaign.Id,productId);
+  stockPriority = (stockPriority.toString().toLowerCase() == "true") ? true : false;
+  Xrm.Page.getAttribute("axx_prioridadstock").setValue(stockPriority);
+  Xrm.Page.getAttribute("axx_prioridadstock").setSubmitMode("always");
+}
+
+function asignarStock(campaignId, productId){
+  currentStock = Number(consultaStockActual(thisOrder.Campaign.Id,productId));
+  currentStock = (currentStock > 0) ? currentStock : 0;
+  Xrm.Page.getAttribute("axx_stockalcrearlinea").setValue(currentStock);
+  Xrm.Page.getAttribute("axx_stockalcrearlinea").setSubmitMode("always");
+}
+
+function cambioCant(){
+  //Xrm.Page.data.entity.save();
+  onChangeCreateUpdate();
+}
+
+function getParentOrderAndProcess(){
+  var errorMssg = "alerta!";
+  var SalesOrderId = Xrm.Page.getAttribute("salesorderid").getValue().substr(1,36);
+  
+  if (!SalesOrderId){return}
+  
+  var organizationName = Xrm.Page.context.getOrgUniqueName();
+  var serverURL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/" + organizationName;
+
+  var odataSelect = serverURL + "/xrmservices/2011/OrganizationData.svc/SalesOrderSet?" + 
+  "$select=axx_CampanaId&" + 
+  "$filter=SalesOrderId eq guid'" + SalesOrderId + "'";
+  
+  $.ajax({
+    type: "GET",
+    contentType: "application/json; charset=utf-8",
+    datatype: "json",
+    url: odataSelect,
+    beforeSend: function (XMLHttpRequest) { XMLHttpRequest.setRequestHeader("Accept", "application/json"); },
+    success: function (data, textStatus, XmlHttpRequest){
+          // Use only one of these two methods
+          // Use for a selection that may return multiple entities
+          //ProcessReturnedEntities(data.d.results); 
+
+          // Use for a single selected entity
+          if(data.d.results.length == 0){
+            alert(errorMssg); 
+            return
+          }
+          processPedidoData(data.d.results[0]);
+        },
+    error: function (XmlHttpRequest, textStatus, errorThrown) { alert('OData Select Failed: ' + odataSelect); }
+  });
+}
+
+function processPedidoData(OneEntity){
+  var oneEntity = OneEntity;
+
+  thisOrder = {
+    Campaign: {
+      Id: oneEntity.axx_CampanaId.Id,
+      Name: oneEntity.axx_CampanaId.Name
+    }
+  }
+  //promocionTipo = oneEntity.axx_TipodeCampana.Value;
+  //promocionPagoUnico = oneEntity.axx_PermitirPagounico;
+  var productId = Xrm.Page.getAttribute("productid").getValue()[0].id.substr(1,36);
+  //asignarPrioridad(thisOrder.Campaign.Id, productId);
+  consultarAsignarPrioridad(thisOrder.Campaign.Id, productId);
+  //asignarStock(thisOrder.Campaign.Id, productId);
+  consultarAsignarStock(thisOrder.Campaign.Id, productId)
+  setDefaultUnit(false);
+  onChangeCreateUpdate();
+}
+
+function onChangeProducto(){
+  var objProducto, lineProductName, lineProduct;
+  
+  objProducto = Xrm.Page.getAttribute("productid").getValue();
+  Xrm.Page.getAttribute("ispriceoverridden").setValue(0);
+  Xrm.Page.getAttribute("ispriceoverridden").fireOnChange();
+  Xrm.Page.getAttribute("axx_stockalcrearlinea").setValue(null);  
+  if(objProducto && objProducto[0]){
+    poductName =objProducto[0].name;
+    productId = objProducto[0].id.substr(1,36);
+    
+    if(typeof thisOrder == "undefined"){
+      getParentOrderAndProcess();
+
+    }else{
+      //asignarPrioridad(thisOrder.Campaign.Id, productId);
+      consultarAsignarPrioridad(thisOrder.Campaign.Id, productId);
+      //asignarStock(thisOrder.Campaign.Id, productId);
+      consultarAsignarStock(thisOrder.Campaign.Id, productId)
+      setDefaultUnit(false);
+      onChangeCreateUpdate();
+    }
+  }
+}
+
+
+function consultarAsignarPrioridad(campaignId, productLineId){
+var productServiceUrl = window.location.protocol + "//" + window.location.hostname + "/StockService-testing/StockService.svc";
+var soapMessage =
+"<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tem=\"http://tempuri.org/\" xmlns:stoc=\"http://schemas.datacontract.org/2004/07/StockService\">" +
+   "<soapenv:Header/>"  +
+     "<soapenv:Body>" + 
+      "<tem:IsPriority>" + 
+         "<tem:wsIn>" +
+            "<stoc:CampaignId>"+campaignId+"</stoc:CampaignId>" +
+            "<stoc:ItemId>"+productLineId+"</stoc:ItemId>" +
+         "</tem:wsIn>" +
+      "</tem:IsPriority>" +
+   "</soapenv:Body>" +
+"</soapenv:Envelope>";
+
+
+jQuery.support.cors = true;
+$.ajax({
+url: productServiceUrl,
+type: "POST",
+crossDomain: true,
+username: "Covedisa\\CrmAdmin",
+password: "Coved159",
+dataType: "xml",
+data: soapMessage,
+beforeSend: function(xhr) { xhr.setRequestHeader("SOAPAction", "http://tempuri.org/IStockService/IsPriority"); },
+complete: setStockPriority,
+contentType: "text/xml; charset=\"utf-8\""
+}); 
+
+return false;
+
+}
+
+function setStockPriority(xmlHttpRequest, status){
+ var stockPriority = $(xmlHttpRequest.responseXML).text();
+ stockPriority = (stockPriority.toString().toLowerCase() == "true") ? true : false;
+ Xrm.Page.getAttribute("axx_prioridadstock").setValue(stockPriority);
+ Xrm.Page.getAttribute("axx_prioridadstock").setSubmitMode("always");
+}
+
+function consultarAsignarStock(campaignId, productLineId){
+var productServiceUrl = window.location.protocol + "//" + window.location.hostname + "/StockService-testing/StockService.svc";
+var soapMessage = "" + 
+"<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tem=\"http://tempuri.org/\" xmlns:stoc=\"http://schemas.datacontract.org/2004/07/StockService\">" +
+   "<soapenv:Header/>"  +
+     "<soapenv:Body>" + 
+      "<tem:GetStock>" + 
+         "<tem:wsIn>" +
+            "<stoc:CampaignId>" + campaignId + "</stoc:CampaignId>" +
+            "<stoc:ItemId>" + productLineId + "</stoc:ItemId>" +
+         "</tem:wsIn>" +
+      "</tem:GetStock>" +
+   "</soapenv:Body>" +
+"</soapenv:Envelope>";
+
+jQuery.support.cors = true;
+$.ajax({
+  url: productServiceUrl,
+  type: "POST",
+  crossDomain: true,
+  username: "Covedisa\\CrmAdmin",
+  password: "Coved159",
+  dataType: "xml",
+  data: soapMessage,
+  beforeSend: function(xhr) { xhr.setRequestHeader("SOAPAction", "http://tempuri.org/IStockService/GetStock"); },
+  complete: setStockAmount,
+  contentType: "text/xml; charset=\"utf-8\""
+}); 
+return false;
+}
+
+function setStockAmount(xmlHttpRequest, status){
+  var currentStock = Number( $(xmlHttpRequest.responseXML).text() );
+  currentStock = (currentStock > 0) ? currentStock : 0;
+  Xrm.Page.getAttribute("axx_stockalcrearlinea").setValue(currentStock);
+  Xrm.Page.getAttribute("axx_stockalcrearlinea").setSubmitMode("never");
+  
+  //Borrar si no hay stock
+  if(currentStock == 0){
+    var thisSodID = (typeof currentSodID !="undefined" && currentSodID !=null) ? currentSodID : Xrm.Page.data.entity.getId();
+    SDK.JQuery.deleteRecord(
+       thisSodID,
+       "SalesOrderDetail",
+       function(){},
+       errorHandler
+    );
+  }
+  
+  //Actualizar el mensaje de cierre:
+  mensajeDeCierre();
+}
+
+*/

@@ -1,0 +1,319 @@
+/*global Axx: true, crmForm: true*/
+//If the Axx and Axx.SalesOrder namespaces objects are not defined, create them.
+if (typeof (Axx) == "undefined") {
+  Axx = {};
+}
+
+if (typeof (Axx.Order) == "undefined") {
+  Axx.Order = {};
+}
+// Create Namespace container for functions in this library;
+Axx.Order.FieldTypes = { lookup: "lookup", optionSet: "optionSet", text: "text",
+                         decimal: "decimal", integer: "integer", nonZero: "nonZero"};
+                         
+Axx.Order.Ribbon = {
+  boton : { pagar : "Pagar", confirmar : "Confirmar", ninguno : "Ninguno" },
+  mostrarAdvertencia : function (message, timeOutMessage, id) {
+    var notificationsArea = document.getElementById('crmNotifications');
+    if (notificationsArea == null) {
+      alert('Error al mostrar notificaciones: Div not found');
+      return;
+    }
+
+    if (typeof id == undefined) { id = "1230000321"; }
+    Axx.Order.Ribbon.borrarAdvertencias(id);
+    /* Create the notification // The integer is the notification type
+                                      1 = Error | 2 = Warning | 3 = Info
+    notificationsArea.AddNotification("<;unique value>;", 3, "","Your text here");
+    */
+    if (id == null) { id = "1230000321"; }
+    notificationsArea.AddNotification(id, 2, "ribbonButton", message);
+    /*clear out notification area*/
+    window.setTimeout("Axx.Order.Ribbon.borrarAdvertencias(" + id + ")", timeOutMessage);
+  },
+  borrarAdvertencias : function (id) {
+    if (typeof id == undefined) { id = null; }
+
+    var notificationsArea = document.getElementById('crmNotifications');
+    /*clear out notification area*/
+    notificationsArea.SetNotifications(id, "ribbonButton");
+  },
+  getServerURL : function () {
+    return window.location.protocol + "//" + window.location.hostname + ":" +
+           window.location.port + "/" + Xrm.Page.context.getOrgUniqueName();
+  },
+  comprobar : {
+    pedidoNoCobrable : function () {
+      var tipo, subtipo, amount, noCobrable;
+      tipo    = Xrm.Page.getAttribute("axx_tipopedido").getValue();
+      subtipo = Xrm.Page.getAttribute("axx_subtipo").getValue();
+      amount  = Xrm.Page.getAttribute("totalamount").getValue();
+      noCobrable = false;
+
+      switch (tipo) {
+      case 1: //Reenvío.
+        noCobrable = true;
+        break;
+      case 2: //Retiro y Cambio.
+        switch (subtipo) {
+        case 0: //Retiro y Cambio.
+        case 1: //Retiro y Cambio Dif. Prod.
+          noCobrable = true;
+          break;
+        case 2: //"Retiro y Cambio Dif. Precio si TotalAmount == 0.
+        case 3: //Retiro y Cambio Dif. Precio y Prod. si TotalAmount == 0.
+          noCobrable = (amount == 0);
+          break;
+        default:
+          break;
+        }
+        break;
+      default:
+        break;
+      }
+      return noCobrable;
+    },
+    tieneUnValor : function (fieldType, field) {
+        var thisFieldValue = Xrm.Page.getAttribute(field).getValue();
+        var hasValue = false;
+        var t = Axx.Order.FieldTypes;
+        
+        switch (fieldType) {
+        case t.lookup:
+          hasValue = (thisFieldValue != null && thisFieldValue[0] != null);
+          break;
+        case t.optionSet:
+          hasValue = (thisFieldValue != null && thisFieldValue >= 0);
+          break;
+        case t.text:
+          hasValue = (thisFieldValue != null && thisFieldValue != "");
+          break;
+        case t.decimal:
+        case t.integer:
+          hasValue = (thisFieldValue != null);
+          break;
+        case t.nonZero:
+          hasValue = (thisFieldValue != null && thisFieldValue != 0);
+          break;
+        default:
+          break;
+        }
+      return hasValue;
+    },
+    tieneCamposNecesarios : function (modo) {
+      var camposNecesarios, length, t, i, hasValue;    
+
+      //Campos necesarios para todos los modos.      
+      camposNecesarios = [
+        {field: "axx_formadepago", type: Axx.Order.FieldTypes.lookup},
+        {field: "axx_campanaid", type: Axx.Order.FieldTypes.lookup},
+        {field: "customerid", type: Axx.Order.FieldTypes.lookup},
+        {field: "shipto_city", type: Axx.Order.FieldTypes.text},
+        {field: "axx_shipto_numero", type: Axx.Order.FieldTypes.text},
+        {field: "shipto_postalcode", type: Axx.Order.FieldTypes.text},
+        {field: "shipto_country", type: Axx.Order.FieldTypes.text},
+        {field: "shipto_city", type: Axx.Order.FieldTypes.text},
+        {field: "pricelevelid", type: Axx.Order.FieldTypes.lookup}
+      ];
+  
+      //Campos necesarios solo si el modo es Pagar.
+      if(modo == Axx.Order.Ribbon.boton.pagar){
+        camposNecesarios.push({field : "axx_tarjetaid", type : Axx.Order.FieldTypes.lookup});
+      }
+      
+      length = camposNecesarios.length;
+      hasValue = false;
+      t = Axx.Order.FieldTypes;
+      for (i = 0; i < length; i++) {
+        hasValue = Axx.Order.Ribbon.comprobar.tieneUnValor(camposNecesarios[i].type, camposNecesarios[i].field);
+        
+        if (!hasValue) {
+          var noValue =  "Debe completar el campo '" + Xrm.Page.getControl(camposNecesarios[i].field).getLabel() +
+                         "' antes de " + modo.toLowerCase() + " el pedido";
+          var id = (modo == Axx.Order.Ribbon.boton.pagar) ? "1000" : "0999";
+          Axx.Order.Ribbon.mostrarAdvertencia(noValue, 3500, id);
+          return hasValue;
+        }
+      }
+      
+      return hasValue;
+    },
+    gastoDeEnvioValidado  : false,
+    gastoEnvio    : {
+      _error : {XmlHttpRequest: null, textStatus: null, errorThrown: null}
+    },
+    lineas        : {
+      _error : {XmlHttpRequest: null, textStatus: null, errorThrown: null},
+      _result : null,
+      tieneLineas : false,
+      get : function () {
+        var odataSelect = Axx.Order.Ribbon.getServerURL() +
+                          "/xrmservices/2011/OrganizationData.svc/SalesOrderDetailSet?" +
+                          "$select=SalesOrderId&$filter=SalesOrderId/Id eq guid'" +
+                          Xrm.Page.data.entity.getId() + "'&$top=1";
+        return $.ajax({
+          type: "GET",
+          contentType: "application/json; charset=utf-8",
+          datatype: "json",
+          url: odataSelect,
+          beforeSend: function (XMLHttpRequest) { XMLHttpRequest.setRequestHeader("Accept", "application/json"); },
+          success: function (data, textStatus, XmlHttpRequest) {
+            // Use for a single selected entity
+            if (data.d.results.length == 0) {
+              Axx.Order.Ribbon.comprobar.lineas._error.errorThrown = "No hay Productos agregados al Pedido";
+            } else {
+              Axx.Order.Ribbon.comprobar.lineas.tieneLineas = true;
+            }
+          },
+          error: function (XmlHttpRequest, textStatus, errorThrown) {
+            Axx.Order.Ribbon.comprobar.lineas._error.XmlHttpRequest = XmlHttpRequest;
+            Axx.Order.Ribbon.comprobar.lineas._error.textStatus     = textStatus;
+            Axx.Order.Ribbon.comprobar.lineas._error.errorThrown    = errorThrown;
+          }
+        });
+      }
+    },
+    formaDePago   : {
+      _error : {XmlHttpRequest: null, textStatus: null, errorThrown: null},
+      _result : null,
+      get : function () {
+        var odataSelect = Axx.Order.Ribbon.getServerURL() +
+                          "/xrmservices/2011/OrganizationData.svc/axx_formadepagoSet?" +
+                          "$select=axx_FormadePago&$filter=axx_formadepagoId eq guid'" +
+                          Xrm.Page.getAttribute("axx_formadepago").getValue()[0].id + "'";
+        return $.ajax({
+          type: "GET",
+          contentType: "application/json; charset=utf-8",
+          datatype: "json",
+          url: odataSelect,
+          beforeSend: function (XMLHttpRequest) { XMLHttpRequest.setRequestHeader("Accept", "application/json"); },
+          success : function (data, textStatus, XmlHttpRequest) {
+            // Use for a single selected entity
+            if (data.d.results.length == 0) {
+              Axx.Order.Ribbon.comprobar.formaDePago._error.textStatus = "No se encontró la forma de pago";
+            } else {
+              Axx.Order.Ribbon.comprobar.formaDePago._result = data.d.results[0];
+              Axx.Order.Ribbon.comprobar.formaDePago.process(data.d.results[0]);
+            }
+          },
+          error: function (XmlHttpRequest, textStatus, errorThrown) {
+            Axx.Order.Ribbon.comprobar.formaDePago._error.XmlHttpRequest = XmlHttpRequest;
+            Axx.Order.Ribbon.comprobar.formaDePago._error.textStatus     = textStatus;
+            Axx.Order.Ribbon.comprobar.formaDePago._error.errorThrown    = errorThrown;
+          }
+        });
+      },
+      process : function (oneEntity) {
+        var tipo = oneEntity.axx_FormadePago.Value;
+        if (tipo == 0 || tipo == 1) {
+          Axx.Order.Ribbon.comprobar.formaDePago.permite = Axx.Order.Ribbon.boton.pagar;
+        } else if (tipo == 2 || tipo == 3) {
+          Axx.Order.Ribbon.comprobar.formaDePago.permite = Axx.Order.Ribbon.boton.confirmar;
+        }
+      }
+    },
+    gastoDeEnvio  : function () {
+      //TO DO
+      //obtiene el valor del campo salesOrder.axx_gastoDeEnvioValidado
+      var odataSelect = Axx.Order.Ribbon.getServerURL() +
+                        "/xrmservices/2011/OrganizationData.svc/SalesOrderSet?" +
+                        "$select=axx_gastoDeEnvioValidado&$filter=SalesOrderId eq guid'" +
+                        Xrm.Page.data.entity.getId() + "'";
+      var _timeOut = 3500;
+      return $.ajax({
+        type: "GET",
+        contentType: "application/json; charset=utf-8",
+        datatype: "json",
+        url: odataSelect,
+        beforeSend: function (XMLHttpRequest) { XMLHttpRequest.setRequestHeader("Accept", "application/json"); },
+        success : function (data, textStatus, XmlHttpRequest) {
+          // Use for a single selected entity
+          if (data.d.results[0]) {
+            Axx.Order.Ribbon.comprobar.gastoDeEnvioValidado = (data.d.results[0].axx_gastoDeEnvioValidado == true);
+          } else {
+            var errorGastoEnvio =  "No se pudo comprobar la validación de gasto de envío";
+            Axx.Order.Ribbon.mostrarAdvertencia(errorGastoEnvio, _timeOut, "1011");
+            Axx.Order.Ribbon.comprobar.gastoDeEnvioValidado = false;
+          }
+          if (!Axx.Order.Ribbon.comprobar.gastoDeEnvioValidado) {
+            solicitarRecalculo();
+          }
+        },
+        error: function (XmlHttpRequest, textStatus, errorThrown) {
+          Axx.Order.Ribbon.comprobar.gastoEnvio._error.XmlHttpRequest = XmlHttpRequest;
+          Axx.Order.Ribbon.comprobar.gastoEnvio._error.textStatus     = textStatus;
+          Axx.Order.Ribbon.comprobar.gastoEnvio._error.errorThrown    = errorThrown;
+          var errorGastoEnvio =  "No se pudo comprobar la validación de gasto de envío";
+          Axx.Order.Ribbon.mostrarAdvertencia(errorGastoEnvio, _timeOut, "1011");
+        }
+      });
+    },
+    checkAndRun   : function (modo, ejecutar) {
+      var errorOData       = "No se pudieron comprobar los Productos o la Forma de Pago del Pedido";
+      var errorLineas      = "No hay Productos agregados al Pedido";
+      var timeOut          = 3500;
+      if (!Axx.Order.Ribbon.comprobar.tieneCamposNecesarios(modo)) {
+        return;
+      }
+      $.when(
+        Axx.Order.Ribbon.comprobar.formaDePago.get(),
+        Axx.Order.Ribbon.comprobar.lineas.get(),
+        Axx.Order.Ribbon.comprobar.gastoDeEnvio()
+      ).then(function () {
+        //I fire once BOTH ajax requests have completed!
+        if (!Axx.Order.Ribbon.comprobar.gastoDeEnvioValidado) {
+          var errorGastoEnvio = "Debe recalcular el pedido antes de ejecutar esta acción";
+          Axx.Order.Ribbon.mostrarAdvertencia(errorGastoEnvio, timeOut, "1001");
+          return;
+        }
+        if (Axx.Order.Ribbon.comprobar.pedidoNoCobrable()) {
+          if (modo != Axx.Order.Ribbon.boton.confirmar) {
+            Axx.Order.Ribbon.mostrarAdvertencia("Este pedido solo puede avanzar de estado utilizando el botón 'Confirmar'", timeOut, "1002");
+            return;
+          }
+        } else {
+          if (modo != Axx.Order.Ribbon.comprobar.formaDePago.permite) {
+            var errorFormaDePago =  "La forma de pago no permite '" + modo + "' utilice el botón '" +
+                                    Axx.Order.Ribbon.comprobar.formaDePago.permite + "'";
+            Axx.Order.Ribbon.mostrarAdvertencia(errorFormaDePago, timeOut, "1002");
+            return;
+          }
+        }
+
+        if (!Axx.Order.Ribbon.comprobar.lineas.tieneLineas) {
+          Axx.Order.Ribbon.mostrarAdvertencia(errorLineas, timeOut, "1003");
+          return;
+        }
+        //Pasaron todas las validaciones, ejecutar:
+        ejecutar();
+
+      }).fail(function () {
+        //I fire if one or more requests failed.
+        Axx.Order.Ribbon.mostrarAdvertencia(errorOData, 6000, "1004");
+      });
+    }
+  },
+  confirmar : function () {
+    Axx.Order.Ribbon.comprobar.checkAndRun(
+      Axx.Order.Ribbon.boton.confirmar,
+      function () {
+        //Confirmar: Ejecuta el submit tal cual como lo haría el botón SubmitOrder.
+        var ORDER_PROCESS_ORDER_EVENT = '19';
+        if (crmForm.IsValid()) {
+          crmForm.SubmitCrmForm(ORDER_PROCESS_ORDER_EVENT, true, true, false);
+        }
+      }
+    );
+  },
+  pagar : function () {
+    Axx.Order.Ribbon.comprobar.checkAndRun(
+      Axx.Order.Ribbon.boton.pagar,
+      function () {
+        //pagar.
+        Xrm.Page.getAttribute("axx_pagoonline").setValue(true);
+        Xrm.Page.getAttribute("axx_pagoonline").setSubmitMode("always");
+        Xrm.Page.data.entity.save();
+      }
+    );
+  }
+};

@@ -1,0 +1,463 @@
+function pagoOnline(){	
+  Xrm.Page.getAttribute("axx_pagoonline").setSubmitMode("always");
+  Xrm.Page.getAttribute("totalamount").setSubmitMode("always");
+  Xrm.Page.getAttribute("axx_montopago").setSubmitMode("always");	
+  Xrm.Page.getAttribute("axx_numcupon").setSubmitMode("always");		
+  Xrm.Page.getAttribute("axx_reintentosdecobro").setSubmitMode("always");	
+  Xrm.Page.getAttribute("axx_representar").setSubmitMode("always");
+  Xrm.Page.getAttribute("axx_pagoonline").setValue(false);
+  if(Xrm.Page.getAttribute("axx_reintentosdecobro")!=null && Xrm.Page.getAttribute("axx_paymentstatus")!=null )
+  {		
+    if (Xrm.Page.getAttribute("axx_reintentosdecobro").getValue() > 0 && Xrm.Page.getAttribute("axx_paymentstatus").getValue()!= 3)
+    {
+      Xrm.Page.getControl("axx_representar").setDisabled(false);
+    }
+    else
+    {
+      Xrm.Page.getControl("axx_representar").setDisabled(true);
+    }
+  }
+  else
+  {
+    Xrm.Page.getControl("axx_representar").setDisabled(true);
+  }
+}
+/*
+function realizarPago(){
+  Xrm	.Page.getAttribute("axx_pagoonline").setValue(true);
+  Xrm.Page.data.entity.save();
+}
+*/
+
+function noBraces(guid){
+  return guid.replace("{","").replace("}","")
+}
+
+function newLookupValue(id, entityType, name){
+  var olookup = {id:id, entityType: entityType, name: name};
+  return [olookup]
+}
+
+function getODataEndPoint() { 
+  return Xrm.Page.context.prependOrgName("/xrmservices/2011/OrganizationData.svc"); 
+}
+function test()
+{
+  debugger;
+  var gg=Xrm.Page.getAttribute("customerid").getValue();
+  retrieveFormaDePago("433E5FAB-E32B-E111-96D1-00155D066504","axx_formadepagoSet",ObtenerFormaDePago, null);
+}
+
+function crearNuevaTarjeta()
+{
+  var entidad;
+  var customerId;
+  var customerName;
+  if(Xrm.Page.getAttribute("customerid").getValue()!=null)  {
+    entidad=Xrm.Page.getAttribute("customerid").getValue()[0].entityType;
+    customerId=Xrm.Page.getAttribute("customerid").getValue()[0].id;
+    customerName=Xrm.Page.getAttribute("customerid").getValue()[0].name;
+  }
+  var formaDePagoId;
+  tipoTarjeta_=null;
+  medioPagoId_=null;
+  medioPagoName_=null;
+  medioPagoType_=null;
+  bancoId_=null;
+  bancoName_=null;
+  bancoType_=null;
+  if(Xrm.Page.getAttribute("axx_formadepago").getValue()!=null) {
+    formaDePagoId=Xrm.Page.getAttribute("axx_formadepago").getValue()[0].id;
+    retrieveFormaDePago(formaDePagoId,"axx_formadepagoSet",ObtenerFormaDePago, null);
+  }
+  var tipoEntidad=0;
+  if(entidad=="account") {
+    tipoEntidad=1;
+  }
+  var serverUrl=Xrm.Page.context.getServerUrl();
+  var tipoCuenta="axx_tipocc="+tipoEntidad;
+  if(tipoTarjeta_!=null) {
+    tipoCuenta=tipoCuenta+"&axx_tipo="+tipoTarjeta_;
+  }
+  if(medioPagoId_!=null  && medioPagoName_!=null) {
+    tipoCuenta=tipoCuenta+"&axx_tarjetamstid="+ medioPagoId_+"&axx_tarjetamstidname="+medioPagoName_;
+  }
+  if(bancoId_!=null  && bancoName_!=null) {
+    tipoCuenta=tipoCuenta+"&axx_bancoid="+ bancoId_+"&axx_bancoidname="+bancoName_;
+  }
+  if(entidad!=null && customerId!=null && customerName!=null && tipoEntidad==0 ) {
+    tipoCuenta=tipoCuenta+"&axx_cliente="+customerId+"&axx_clientename="+customerName;     
+  } else if(entidad!=null && customerId!=null && customerName!=null && tipoEntidad==1) {
+    tipoCuenta=tipoCuenta+"&axx_cuentaid="+customerId+"&axx_cuentaidname="+customerName;    
+  }
+  var tipoCuenta=encodeURIComponent(tipoCuenta);
+  var linkWindow=serverUrl+"/main.aspx?etn=axx_tarjeta&extraqs="+tipoCuenta+"&pagetype=entityrecord";
+  window.open(linkWindow,'','location=no');
+}
+
+
+function  retrieveFormaDePago(id, odataSetName, successCallback, errorCallback) {  
+  //id is required
+  if (!id) {
+    alert("record id is required.");
+    return;
+  }
+  if (!odataSetName) {
+    alert("odataSetName is required.");
+    return;
+  }
+  //Asynchronous AJAX function to Retrieve a CRM record using OData
+  $.ajax({
+type: "GET",
+async:false,
+contentType: "application/json; charset=utf-8",
+datatype: "json",
+url:getODataEndPoint() + "/" + odataSetName + "?$filter=axx_formadepagoId  eq  guid'"+id+"'",
+beforeSend: function (XMLHttpRequest) {
+      //Specifying this header ensures that the results will be returned as JSON.             
+      XMLHttpRequest.setRequestHeader("Accept", "application/json");
+    },
+success: function (data, textStatus, XmlHttpRequest) {
+      if (successCallback) {
+        successCallback(data.d, textStatus, XmlHttpRequest);
+      }
+    },
+error: function (XmlHttpRequest, textStatus, errorThrown) {
+      if (errorCallback)
+      errorCallback(XmlHttpRequest, textStatus, errorThrown);
+      else
+      errorHandler(XmlHttpRequest, textStatus, errorThrown);
+    }
+  });
+}
+
+function ObtenerFormaDePago(data, textStatus, XmlHttpRequest)
+{
+  medioPagoId_=data.results[0].axx_MediodePagoId.Id;
+  medioPagoType_=data.results[0].axx_MediodePagoId.LogicalName;
+  medioPagoName_=data.results[0].axx_MediodePagoId.Name;
+  bancoId_=data.results[0].axx_EntidadBancariaId.Id;
+  bancoType_=data.results[0].axx_EntidadBancariaId.LogicalName;
+  bancoName_=data.results[0].axx_EntidadBancariaId.Name;
+  tipoTarjeta_=data.results[0].axx_FormadePago.Value;
+}
+
+function bloquearEstadoPago(){
+  Xrm.Page.getControl("axx_paymentstatus").setDisabled(true);
+  Xrm.Page.getControl("axx_numcupon").setDisabled(true);
+}
+
+function bloquearCampoDireccion() {
+  Xrm.Page.getAttribute("willcall").setValue(true);
+  Xrm.Page.getAttribute("willcall").setSubmitMode("never");
+  /* Comentario Iván:
+    Hay una función interna de CRM que se ejecuta despues del OnLoad y que vuelve a habilitar o deshabilitar 
+    la dirección de entrega en base al campo willcall.
+    
+    var fields = ["shipto_name","shipto_line1","shipto_postalcode","shipto_telephone","shipto_country","shipto_stateorprovince","shipto_city"];
+                      
+    for (var i=0; i<fields.length; i++) { 
+      Xrm.Page.getControl(fields[i]).setDisabled(true);
+    }
+    */
+}
+
+
+function guardarCamposLote(){
+  if(isFormReadOnly()){return;}
+  Xrm.Page.getAttribute("axx_estadolote").setSubmitMode("always");
+  Xrm.Page.getAttribute("axx_fechalote").setSubmitMode("always");
+  Xrm.Page.getAttribute("axx_archivolote").setSubmitMode("always");
+}
+
+function bloquearPedidoAutorizar(){
+
+}
+
+//"Sin Cliente","A7B3E862-B11A-E111-ABBC-00155D066504"
+function noRequerirCliente(contactName, contactId){
+  if(isFormReadOnly()){return;}
+  var formType = Xrm.Page.ui.getFormType();
+  var customerField = Xrm.Page.getAttribute("customerid");
+  
+  if(formType == 1){
+    customerField.setRequiredLevel("none");
+  }else{
+    if(formType == 2){
+      if(customerField.getValue() != null && customerField.getValue()[0] != null){
+        if(customerField.getValue()[0].id == contactId){
+          customerField.setRequiredLevel("none");
+          customerField.setValue(null);
+        }
+      }
+    }
+  }
+}
+
+function guardarClienteGenerico(contactName, contactId){
+  var customerField = Xrm.Page.getAttribute("customerid");
+  if(customerField.getValue() == null){
+    var lookupReference = [];
+    lookupReference[0] = {};
+    lookupReference[0].id = contactId;
+    lookupReference[0].entityType = "contact";
+    lookupReference[0].name = contactName;
+    customerField.setValue(lookupReference);
+  }
+}
+
+
+function getDatosCampaniaDefault(){
+  var errorMssg = "alerta!";
+  
+  var CampaniaId = Xrm.Page.getAttribute("axx_campanaid");
+  CampaniaId = (CampaniaId.getValue()) ? CampaniaId.getValue()[0].id : null;
+  
+  if (!CampaniaId){return}
+  
+  var organizationName = Xrm.Page.context.getOrgUniqueName();
+  var serverURL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/" + organizationName ;
+
+  var odataSelect = serverURL + "/xrmservices/2011/OrganizationData.svc/axx_campanaSet?" + 
+  "$select=axx_campanaId,axx_ListadeMarketingDefault,axx_Negocio,axx_PromocionDefaultId,axx_promociondefault_campana/axx_ListadePrecios&$" +
+  "expand=axx_promociondefault_campana&$" + 
+  "filter=axx_campanaId eq guid'" + CampaniaId + "'";
+  
+  
+  $.ajax({
+type: "GET",
+contentType: "application/json; charset=utf-8",
+datatype: "json",
+url: odataSelect,
+beforeSend: function (XMLHttpRequest) { XMLHttpRequest.setRequestHeader("Accept", "application/json"); },
+success: function (data, textStatus, XmlHttpRequest)
+    {
+      if(data.d.results.length == 0){
+        alert(errorMssg); 
+        return
+      }
+
+      //Tomo los datos de respuesta y llamo a la funcion que procesa la misma
+      var axxCampania = data.d.results[0];
+      DefaultCampania(axxCampania);
+      
+      //window.alert(axxCampania.axx_Negocio.Name);
+    },
+error: function (XmlHttpRequest, textStatus, errorThrown) { alert('OData Select Failed: ' + odataSelect); }
+  }); 
+}
+
+function DefaultCampania(axxCampania){
+  var lookupPromocionDefault = Xrm.Page.getAttribute("axx_promocion");
+  var ListadeMarketingDefault = Xrm.Page.getAttribute("axx_listademarketing");
+  var ListaDePrecios = Xrm.Page.getAttribute("pricelevelid");
+  var negocio = Xrm.Page.getAttribute("axx_negocio");
+  var negocioRetrieved = axxCampania.axx_Negocio;
+  
+  //Cargo el negocio al que corresponde la Campaña solo si la suscripcion no tiene ninguno;
+  if (negocioRetrieved.Id != null && negocio.getValue() == null) 
+  {
+    var newNegocio = newLookupValue(negocioRetrieved.Id, negocioRetrieved.LogicalName, negocioRetrieved.Name);
+    negocio.setValue(newNegocio);
+    negocio.setSubmitMode("always");
+  }
+  
+  //window.alert(axxCampania.axx_PromocionDefaultId.Name);
+  //Cargo al pedido la Promocion por Defecto 
+  if (axxCampania.axx_PromocionDefaultId.Id != null)
+  {
+    var olookup_1 = new Object();
+    var olookupValue_1 = new Array();
+    olookup_1.id = axxCampania.axx_PromocionDefaultId.Id;
+    olookup_1.entityType = axxCampania.axx_PromocionDefaultId.LogicalName;
+    olookup_1.name = axxCampania.axx_PromocionDefaultId.Name;
+    olookupValue_1[0] = olookup_1;
+    lookupPromocionDefault.setValue(olookupValue_1);
+  }
+  else
+  {
+    lookupPromocionDefault.setValue(null);
+  }
+  
+  //window.alert(axxCampania.axx_ListadeMarketingDefault.Name);
+  //Cargo al pedido la Lista de Marketing por defecto
+  if (axxCampania.axx_ListadeMarketingDefault.Id != null){
+    var olookup_2 = new Object();
+    var olookupValue_2 = new Array();
+    olookup_2.id = axxCampania.axx_ListadeMarketingDefault.Id;
+    olookup_2.entityType = axxCampania.axx_ListadeMarketingDefault.LogicalName;
+    olookup_2.name = axxCampania.axx_ListadeMarketingDefault.Name;
+    olookupValue_2[0] = olookup_2;
+    ListadeMarketingDefault.setValue(olookupValue_2);
+  }else{
+    ListadeMarketingDefault.setValue(null);
+  }
+  
+  if (axxCampania.axx_promociondefault_campana.axx_ListadePrecios.Id != null){
+    var procesar = true;
+    if (ListaDePrecios.getValue() == null)
+    {
+      procesar = true;
+    }else{
+      if (axxCampania.axx_promociondefault_campana.axx_ListadePrecios.Id != ListaDePrecios.getValue()[0].id){
+        procesar = true;
+      }else{
+        procesar = false;
+      }
+    }
+    if (procesar){
+      var olookup_3 = new Object();
+      var olookupValue_3 = new Array();
+      olookup_3.id = axxCampania.axx_promociondefault_campana.axx_ListadePrecios.Id;
+      olookup_3.entityType = axxCampania.axx_promociondefault_campana.axx_ListadePrecios.LogicalName;
+      olookup_3.name = axxCampania.axx_promociondefault_campana.axx_ListadePrecios.Name;
+      olookupValue_3[0] = olookup_3;
+      ListaDePrecios.setValue(olookupValue_3);
+    }
+
+  }else{
+    ListaDePrecios.setValue(null);
+  }
+
+  changepromocion();
+}
+
+function CrearReenvioPedido() {
+  //Busco la organizacion donde estoy trabajando
+  var organization = Xrm.Page.context.getOrgUniqueName();
+  
+  //Tomo los datos de la entida Order
+  var nameOrder = Xrm.Page.getAttribute("ordernumber").getValue();
+  nameOrder = "Reenvio: " + nameOrder;
+  var typeOrder = Xrm.Page.getAttribute("axx_tipopedido").getValue();
+  var salesOrderId = Xrm.Page.data.entity.getId();
+  salesOrderId = salesOrderId.replace("{", "");
+  salesOrderId = salesOrderId.replace("}", "");
+  
+  if (typeOrder == 0) 
+  {
+    //Seteo los valores por defecto de algunos campos
+    var extraqs = "?_CreateFromId=%7b" + salesOrderId + "%7d";
+    extraqs += "&_CreateFromType=1088";
+    extraqs += "&etc=1088";
+    extraqs += "&name=" + nameOrder;
+    extraqs += "&axx_tipopedido=1";
+    
+    //Configuro los valores con que se va a abrir la ventana
+    var features = "location=no,menubar=no,status=no,toolbar=no,resizable=yes";
+    
+    // Abro la ventana de Pedidos
+    window.open("/" + organization + "/main.aspx?etc=1088&extraqs=" + encodeURIComponent(extraqs) + "&pagetype=entityrecord", "_blank", features, false);
+  }
+  else
+  {
+    window.alert("No se puede generar un reenvio de un pedido tipo Reenvio.");
+  }
+}
+
+function GuardarNuevoAutomatico(){
+  /*
+  var axx_tipopedido = Xrm.Page.getAttribute("axx_tipopedido").getValue();
+  var formType = Xrm.Page.ui.getFormType();
+
+  if (formType == 1 && axx_tipopedido == 2) //Si es un reenvio y el formulario es de creacion
+  {
+    ObtenerCamposPorDefecto();
+    Xrm.Page.getAttribute("axx_tipopedido").setValue(1);
+  }
+  
+*/
+  var qsParameters = Xrm.Page.context.getQueryStringParameters();
+  var esNuevo = qsParameters['axx_esNuevo'];
+  var formType = Xrm.Page.ui.getFormType();
+
+  if (formType == 1 && esNuevo == "true" ) //Si es nuevo y el formulario es de creacion
+  {
+    ObtenerCamposPorDefecto();
+  }
+}
+
+function ObtenerCamposPorDefecto(){
+  var errorMssg = "alerta!";
+  
+  var CampaniaId = Xrm.Page.getAttribute("axx_campanaid");
+  CampaniaId = (CampaniaId.getValue()) ? CampaniaId.getValue()[0].id : null;
+  
+  if (!CampaniaId){return }
+  
+  var organizationName = Xrm.Page.context.getOrgUniqueName();
+  var serverURL = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/" + organizationName ;
+
+  var odataSelect = serverURL + "/xrmservices/2011/OrganizationData.svc/axx_campanaSet?" + 
+  "$select=axx_PromocionDefaultId,axx_promociondefault_campana/axx_ListadePrecios&$expand=axx_promociondefault_campana&$" + 
+  "filter=axx_campanaId eq guid'" + CampaniaId + "'";
+  
+  $.ajax({
+type: "GET",
+contentType: "application/json; charset=utf-8",
+datatype: "json",
+url: odataSelect,
+beforeSend: function (XMLHttpRequest) { XMLHttpRequest.setRequestHeader("Accept", "application/json"); },
+success: function (data, textStatus, XmlHttpRequest)
+    {
+      // Use for a single selected entity
+      if(data.d.results.length == 0){
+        alert(errorMssg); 
+        return
+      }else{
+        procesarDatosPorDefecto(data.d.results[0]);
+      }
+    },
+error: function (XmlHttpRequest, textStatus, errorThrown) { alert('OData Select Failed: ' + odataSelect); }
+  }); 
+}
+
+
+function procesarDatosPorDefecto(camposDefault){
+  
+  
+  //Cargo la promocion por defecto
+  var promocionDefault = camposDefault.axx_PromocionDefaultId.Id;
+  var promocionDefaultName = camposDefault.axx_PromocionDefaultId.Name;
+  var promocionDefaultTipo = camposDefault.axx_PromocionDefaultId.LogicalName;
+  
+  Promocion = Xrm.Page.getAttribute("axx_promocion");
+  
+  var olookup_1 = new Object();
+  var olookupValue_1 = new Array();
+  olookup_1.id = promocionDefault;
+  olookup_1.entityType = promocionDefaultTipo;
+  olookup_1.name = promocionDefaultName;
+  olookupValue_1[0] = olookup_1;
+  Promocion.setValue(olookupValue_1);
+  
+  //Cargar Lista de Precios de la Promocion
+  var promocionListaPrecios = camposDefault.axx_promociondefault_campana.axx_ListadePrecios.Id; 
+  var promocionListaPreciosName = camposDefault.axx_promociondefault_campana.axx_ListadePrecios.Name;
+  var promocionListaPreciosTipo = camposDefault.axx_promociondefault_campana.axx_ListadePrecios.LogicalName;
+  
+  var ListaDePrecio = Xrm.Page.getAttribute("pricelevelid");
+  
+  var procesar = true;
+
+  if (ListaDePrecio.getValue() == null){
+    procesar = true;
+  }else{
+    if (camposDefault.axx_promociondefault_campana.axx_ListadePrecios.Id != ListaDePrecios.getValue()[0].id){
+      procesar = true;
+    }else{
+      procesar = false;
+    }
+  }
+  
+  if(procesar){
+    var olookup_2 = new Object();
+    var olookupValue_2 = new Array();
+    olookup_2.id = promocionListaPrecios;
+    olookup_2.entityType = promocionListaPreciosTipo;
+    olookup_2.name = promocionListaPreciosName;
+    olookupValue_2[0] = olookup_2;
+    ListaDePrecio.setValue(olookupValue_2);
+  }
+  Xrm.Page.data.entity.save();
+}
