@@ -50,7 +50,7 @@ namespace BasicSimplePlugin
             }
         }
 		
-		private Guid GetSolicitud(Guid id, IOrganizationService service)
+	private Guid GetSolicitud(Guid id, IOrganizationService service)
         {
             string fetch2 = "<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>";
             fetch2 += "<entity name='opportunity'>";
