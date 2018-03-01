@@ -49,5 +49,39 @@ namespace BasicSimplePlugin
                 }
             }
         }
+		
+		private Guid GetSolicitud(Guid id, IOrganizationService service)
+        {
+            string fetch2 = "<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>";
+            fetch2 += "<entity name='opportunity'>";
+            fetch2 += "<attribute name='name' /> ";
+            fetch2 += "<attribute name='customerid' /> ";
+            fetch2 += "<attribute name='estimatedvalue' /> ";
+            fetch2 += "<attribute name='statecode' /> ";
+            fetch2 += "<attribute name='statuscode' /> ";
+            fetch2 += "<attribute name='pnet_recordcommitteeid' />";
+            fetch2 += "<order attribute='name' descending='false' />";
+            fetch2 += "<filter type='and'>";
+            fetch2 += "<condition attribute='parentcontactid' operator='eq' uitype='contact' value='{" + id.ToString()+ "}' />";
+            fetch2 += "<condition attribute='statecode' operator='eq' value='0' />";
+            fetch2 += "<condition attribute='statuscode' operator='not-in'>";
+            fetch2 += "<value>102610005</value>";
+            fetch2 += "<value>102610004</value>";
+            fetch2 += "<value>102610006</value>";
+            fetch2 += "</condition>";
+            fetch2 += "</filter>";
+            fetch2 += "</entity>";
+            fetch2 += "</fetch>";
+
+            EntityCollection result = service.RetrieveMultiple(new FetchExpression(fetch2));
+            if (result.Entities.Count > 0)
+            {
+                return ((EntityReference)result.Entities[0].Attributes["pnet_recordcommitteeid"]).Id;
+            }
+            else
+            {
+                return Guid.Empty;
+            }
+        }		
     }
 }
